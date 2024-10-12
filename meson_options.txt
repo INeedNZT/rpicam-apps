@@ -28,6 +28,11 @@ option('enable_tflite',
         value : 'disabled',
         description : 'Enable Tensorflow Lite postprocessing support')
 
+option('enable_dlib',
+        type : 'feature',
+        value : 'disabled',
+        description : 'Enable Dlib postprocessing support')
+
 option('neon_flags',
         type : 'combo',
         choices: ['arm64', 'armv8-neon', 'auto'],

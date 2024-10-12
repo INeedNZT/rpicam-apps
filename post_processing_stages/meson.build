@@ -99,6 +99,29 @@ if tflite_dep.found()
     enable_tflite = true
 endif
 
+# Dlib based postprocessing stages.
+enable_dlib = false
+dlib_dep = dependency('dlib', required : get_option('enable_dlib'))
+if dlib_dep.found()
+    dlib_postproc_src = files([
+            'face_recognition_stage.cpp'
+        ])
+
+    postproc_assets += files([
+        assets_dir / 'face_recognition_dlib.json',
+    ])
+
+    dlib_postproc_lib = shared_module('dlib-postproc', dlib_postproc_src,
+                                      include_directories : '../..',
+                                      dependencies : [libcamera_dep, dlib_dep],
+                                      cpp_args : cpp_arguments,
+                                      install : true,
+                                      install_dir : posproc_libdir,
+                                      name_prefix : '',
+                                     )
+    enable_dlib = true
+endif
+
 # Hailo postprocessing stages.
 enable_hailo = false
 hailort_dep = dependency('HailoRT', modules : ['HailoRT::libhailort'], version: '>=4.18.0',

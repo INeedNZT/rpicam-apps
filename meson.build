@@ -99,6 +99,7 @@ summary({
             'qt preview' : enable_qt,
             'OpenCV postprocessing' : enable_opencv,
             'TFLite postprocessing' : enable_tflite,
+            'Dlib postprocessing' : enable_dlib,
             'Hailo postprocessing' : enable_hailo,
             'IMX500 postprocessing' : get_option('enable_imx500'),
         },

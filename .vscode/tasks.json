@@ -5,13 +5,18 @@
             "label": "compile",
             "command": "meson compile -C build",
             "type": "shell",
-            "args": [],
         },
         {
-            "label": "debug_config",
-            "command": "meson configure build --buildtype=debug",
+            "label": "install",
+            "command": "sudo meson install -C build",
             "type": "shell",
-            "args": [],
+        },
+        {
+            "label": "compile&install",
+            "dependsOn":["compile", "install"],
+            "dependsOrder": "sequence",
+            "command": "echo Compile and install complete",
+            "type": "shell",
         },
         {
             "label": "debug_setup",
@@ -22,14 +27,8 @@
             "group": "build"
         },
         {
-            "label": "release_config",
-            "command": "meson configure build --buildtype=release",
-            "type": "shell",
-            "args": [],
-        },
-        {
             "label": "release_build",
-            "dependsOn":["setup", "release_config", "compile"],
+            "dependsOn":["setup", "compile&install"],
             "dependsOrder": "sequence",
             "command": "echo Release complete",
             "type": "shell",

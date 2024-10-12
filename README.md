@@ -1,3 +1,9 @@
+# surveillance
+
+```shell
+sudo apt-get install libdlib-dev
+```
+
 # rpicam-apps
 This is a small suite of libcamera-based applications to drive the cameras on a Raspberry Pi platform.
 

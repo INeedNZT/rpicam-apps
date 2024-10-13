@@ -19,6 +19,11 @@
             "type": "shell",
         },
         {
+            "label": "debug_config",
+            "command": "meson configure build --buildtype=debug",
+            "type": "shell"
+        },
+        {
             "label": "debug_setup",
             "dependsOn":["setup", "debug_config"],
             "dependsOrder": "sequence",

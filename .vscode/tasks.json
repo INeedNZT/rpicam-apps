@@ -20,7 +20,7 @@
         },
         {
             "label": "debug_config",
-            "command": "meson configure build --buildtype=debug",
+            "command": "CC=\"ccache gcc\" CXX=\"ccache g++\" meson configure build --buildtype=debug",
             "type": "shell"
         },
         {
@@ -42,7 +42,7 @@
         {
             "label": "clean",
             "type": "shell",
-            "command": "rm -rf build",
+            "command": "rm -rf build builddir",
         },
         {
             "label": "setup",

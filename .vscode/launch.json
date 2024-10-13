@@ -9,7 +9,9 @@
             "program": "${workspaceFolder}/build/apps/rpicam-hello",
             "args": [
                 "-t", "0",
-                "--post-process-file", "assets/face_recognition_dlib.json"
+                "--post-process-file", "assets/face_recognition_dlib.json",
+                "--lores-width", "400", 
+                "--lores-height", "300"
             ],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "compile&install",

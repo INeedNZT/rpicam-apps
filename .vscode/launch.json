@@ -10,8 +10,8 @@
             "args": [
                 "-t", "0",
                 "--post-process-file", "assets/face_recognition_dlib.json",
-                "--lores-width", "400", 
-                "--lores-height", "300"
+                "--lores-width", "384", 
+                "--lores-height", "216"
             ],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "compile&install",

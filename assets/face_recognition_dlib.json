@@ -1,5 +1,18 @@
 {
+    "rpicam-apps":
+    {
+        "lores":
+        {
+            "width": 384,
+            "height": 216,
+            "format": "rgb"
+        }
+    },
     "face_recognition_dlib":
     {
+        "dat_file_fr": "/usr/share/dlib-models/dlib_face_recognition_resnet_model_v1.dat",
+        "dat_file_lm": "/usr/share/dlib-models/shape_predictor_5_face_landmarks.dat",
+        "face_dir": "./face",
+        "refresh_rate": 5
     }
 }

@@ -71,6 +71,9 @@ private:
 	unique_ptr<std::future<void>> future_ptr_;
 	std::mutex future_ptr_mutex_;
 	int refresh_rate_;
+	std::string dat_file_fr_;
+	std::string dat_file_lm_;
+	std::string face_dir_;
 
 	matrix<rgb_pixel> image_;
 	frontal_face_detector detector;
@@ -91,7 +94,10 @@ char const *FaceRecognitionStage::Name() const
 
 void FaceRecognitionStage::Read(boost::property_tree::ptree const &params)
 {
-	refresh_rate_ = 5;
+	dat_file_fr_ = params.get<std::string>("dat_file_fr", "");
+	dat_file_lm_ = params.get<std::string>("dat_file_lm", "");
+	face_dir_ = params.get<std::string>("face_dir", "");
+	refresh_rate_ = params.get<int>("refresh_rate", 1);
 }
 
 void FaceRecognitionStage::Configure()
@@ -103,10 +109,10 @@ void FaceRecognitionStage::Configure()
 	image_.set_size(low_res_info_.height, low_res_info_.width);
 
 	detector = get_frontal_face_detector();
-	deserialize("shape_predictor_5_face_landmarks.dat") >> sp;
-	deserialize("dlib_face_recognition_resnet_model_v1.dat") >> net;
+	deserialize(dat_file_lm_) >> sp;
+	deserialize(dat_file_fr_) >> net;
 
-	loadAllImages("./faces");
+	loadAllImages(face_dir_);
 }
 
 bool FaceRecognitionStage::Process(CompletedRequestPtr &completed_request)
@@ -140,8 +146,8 @@ bool FaceRecognitionStage::Process(CompletedRequestPtr &completed_request)
 
 			try
 			{
-				save_jpeg(image_, "output_image.jpg");
-				cout << "Image saved to output_image.jpg" << endl;
+				// save_jpeg(image_, "output_image.jpg");
+				// cout << "Image saved to output_image.jpg" << endl;
 			}
 			catch (const dlib::error &e)
 			{

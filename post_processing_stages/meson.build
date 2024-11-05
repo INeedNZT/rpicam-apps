@@ -104,7 +104,7 @@ enable_dlib = false
 dlib_dep = dependency('dlib', required : get_option('enable_dlib'))
 if dlib_dep.found()
     dlib_postproc_src = files([
-            'face_recognition_stage.cpp'
+            'face_recognition_dlib_stage.cpp'
         ])
 
     postproc_assets += files([

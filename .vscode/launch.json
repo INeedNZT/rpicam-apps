@@ -6,12 +6,10 @@
             "name": "debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/apps/rpicam-hello",
+            "program": "${workspaceFolder}/build/apps/rpicam-vid",
             "args": [
                 "-t", "0",
-                "--post-process-file", "assets/face_recognition_dlib.json",
-                "--lores-width", "384", 
-                "--lores-height", "216"
+                "--post-process-file", "assets/face_recognition_dlib.json"
             ],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "compile&install",

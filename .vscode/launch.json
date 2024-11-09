@@ -6,10 +6,12 @@
             "name": "debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/apps/rpicam-vid",
+            "program": "${workspaceFolder}/build/apps/rpicam-surv",
             "args": [
                 "-t", "0",
-                "--post-process-file", "assets/face_recognition_dlib.json"
+                "-r", "--inline",
+                "--hls-directory", "/home/xjm/hls",
+                "--post-process-file", "assets/surveillance.json"
             ],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "compile&install",

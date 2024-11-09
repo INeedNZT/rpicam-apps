@@ -51,6 +51,7 @@ subdir('image')
 subdir('output')
 subdir('preview')
 subdir('utils')
+subdir('web')
 
 add_project_arguments(cpp_arguments, language : 'cpp')
 

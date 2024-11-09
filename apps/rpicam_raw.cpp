@@ -13,7 +13,7 @@
 
 using namespace std::placeholders;
 
-class LibcameraRaw : public RPiCamEncoder
+class LibcameraRaw : public RPiCamEncoder<>
 {
 public:
 	LibcameraRaw() : RPiCamEncoder() {}

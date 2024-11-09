@@ -1,10 +1,3 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
-/*
- * Copyright (C) 2020, Raspberry Pi (Trading) Ltd.
- *
- * rpicam_vid.cpp - libcamera video record app.
- */
-
 #include <chrono>
 #include <poll.h>
 #include <signal.h>
@@ -12,11 +5,41 @@
 #include <sys/stat.h>
 
 #include "core/rpicam_encoder.hpp"
-#include "output/output.hpp"
+#include "output/surv_output.hpp"
+
+#include "core/surv_options.hpp"
+#include "web/web_server.hpp"
 
 using namespace std::placeholders;
 
 // Some keypress/signal handling.
+
+class RPiCamSurvApp : public RPiCamEncoder<SurvOptions>
+{
+public:
+	RPiCamSurvApp() : RPiCamEncoder<SurvOptions>(), webServer_(nullptr) {}
+
+	void StartWebServer()
+	{
+		if (!webServer_)
+		{
+			webServer_ = WebServer::Create("127.0.0.1", 8000, 100);
+			webServer_->Start();
+		}
+	}
+
+	void StopWebServer()
+	{
+		if (webServer_)
+		{
+			webServer_->Stop();
+			webServer_.reset();
+		}
+	}
+
+private:
+	std::unique_ptr<WebServer> webServer_;
+};
 
 static int signal_received;
 static void default_signal_handler(int signal_number)
@@ -25,7 +48,7 @@ static void default_signal_handler(int signal_number)
 	LOG(1, "Received signal " << signal_number);
 }
 
-static int get_key_or_signal(VideoOptions const *options, pollfd p[1])
+static int get_key_or_signal(SurvOptions const *options, pollfd p[1])
 {
 	int key = 0;
 	if (signal_received == SIGINT)
@@ -55,19 +78,22 @@ static int get_key_or_signal(VideoOptions const *options, pollfd p[1])
 static int get_colourspace_flags(std::string const &codec)
 {
 	if (codec == "mjpeg" || codec == "yuv420")
-		return RPiCamEncoder<>::FLAG_VIDEO_JPEG_COLOURSPACE;
+		return RPiCamSurvApp::FLAG_VIDEO_JPEG_COLOURSPACE;
 	else
-		return RPiCamEncoder<>::FLAG_VIDEO_NONE;
+		return RPiCamSurvApp::FLAG_VIDEO_NONE;
 }
 
 // The main even loop for the application.
 
-static void event_loop(RPiCamEncoder<> &app)
+static void event_loop(RPiCamSurvApp &app)
 {
-	VideoOptions const *options = app.GetOptions();
-	std::unique_ptr<Output> output = std::unique_ptr<Output>(Output::Create(options));
+	SurvOptions const *options = app.GetOptions();
+	std::unique_ptr<Output> output = std::unique_ptr<Output>(SurvOutput::Create(options));
 	app.SetEncodeOutputReadyCallback(std::bind(&Output::OutputReady, output.get(), _1, _2, _3, _4));
 	app.SetMetadataReadyCallback(std::bind(&Output::MetadataReady, output.get(), _1));
+
+	// Start web server and surveillance recorder thread first
+	app.StartWebServer();
 
 	app.OpenCamera();
 	app.ConfigureVideo(get_colourspace_flags(options->codec));
@@ -85,19 +111,19 @@ static void event_loop(RPiCamEncoder<> &app)
 	signal(SIGPIPE, default_signal_handler);
 	pollfd p[1] = { { STDIN_FILENO, POLLIN, 0 } };
 
-	for (unsigned int count = 0; ; count++)
+	for (unsigned int count = 0;; count++)
 	{
-		RPiCamEncoder<>::Msg msg = app.Wait();
-		if (msg.type == RPiCamApp::MsgType::Timeout)
+		RPiCamSurvApp::Msg msg = app.Wait();
+		if (msg.type == RPiCamSurvApp::MsgType::Timeout)
 		{
 			LOG_ERROR("ERROR: Device timeout detected, attempting a restart!!!");
 			app.StopCamera();
 			app.StartCamera();
 			continue;
 		}
-		if (msg.type == RPiCamEncoder<>::MsgType::Quit)
+		if (msg.type == RPiCamSurvApp::MsgType::Quit)
 			return;
-		else if (msg.type != RPiCamEncoder<>::MsgType::RequestComplete)
+		else if (msg.type != RPiCamSurvApp::MsgType::RequestComplete)
 			throw std::runtime_error("unrecognised message!");
 		int key = get_key_or_signal(options, p);
 		if (key == '\n')
@@ -105,8 +131,7 @@ static void event_loop(RPiCamEncoder<> &app)
 
 		LOG(2, "Viewfinder frame " << count);
 		auto now = std::chrono::high_resolution_clock::now();
-		bool timeout = !options->frames && options->timeout &&
-					   ((now - start_time) > options->timeout.value);
+		bool timeout = !options->frames && options->timeout && ((now - start_time) > options->timeout.value);
 		bool frameout = options->frames && count >= options->frames;
 		if (timeout || frameout || key == 'x' || key == 'X')
 		{
@@ -128,8 +153,8 @@ int main(int argc, char *argv[])
 {
 	try
 	{
-		RPiCamEncoder app;
-		VideoOptions *options = app.GetOptions();
+		RPiCamSurvApp app;
+		SurvOptions *options = app.GetOptions();
 		if (options->Parse(argc, argv))
 		{
 			if (options->verbose >= 2)

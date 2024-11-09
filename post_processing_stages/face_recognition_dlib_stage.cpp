@@ -76,9 +76,9 @@ private:
 	std::string face_dir_;
 
 	matrix<rgb_pixel> image_;
-	frontal_face_detector detector;
-	shape_predictor sp;
-	anet_type net;
+	frontal_face_detector detector_;
+	shape_predictor sp_;
+	anet_type net_;
 
 	std::vector<matrix<float, 0, 1>> recorded_face_descriptors;
 	void loadAllImages(const fs::path &image_dir);
@@ -108,9 +108,9 @@ void FaceRecognitionStage::Configure()
 	low_res_info_ = app_->GetStreamInfo(stream_);
 	image_.set_size(low_res_info_.height, low_res_info_.width);
 
-	detector = get_frontal_face_detector();
-	deserialize(dat_file_lm_) >> sp;
-	deserialize(dat_file_fr_) >> net;
+	detector_ = get_frontal_face_detector();
+	deserialize(dat_file_lm_) >> sp_;
+	deserialize(dat_file_fr_) >> net_;
 
 	loadAllImages(face_dir_);
 }
@@ -246,7 +246,7 @@ void FaceRecognitionStage::loadAllImages(const fs::path &image_dir)
 void FaceRecognitionStage::getFaceDescriptors(matrix<rgb_pixel> &img,
 											  std::vector<matrix<float, 0, 1>> &face_descriptors)
 {
-	std::vector<rectangle> faces = detector(img);
+	std::vector<rectangle> faces = detector_(img);
 	if (faces.size() == 0)
 	{
 		face_descriptors.clear();
@@ -256,11 +256,11 @@ void FaceRecognitionStage::getFaceDescriptors(matrix<rgb_pixel> &img,
 	std::vector<matrix<rgb_pixel>> face_chips;
 	for (auto &face : faces)
 	{
-		auto shape = sp(img, face);
+		auto shape = sp_(img, face);
 		matrix<rgb_pixel> face_chip;
 		extract_image_chip(img, get_face_chip_details(shape, 150, 0.25), face_chip);
 		face_chips.push_back(move(face_chip));
 	}
 
-	face_descriptors = net(face_chips);
+	face_descriptors = net_(face_chips);
 }

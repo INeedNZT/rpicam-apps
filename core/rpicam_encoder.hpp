@@ -15,6 +15,7 @@
 
 typedef std::function<void(void *, size_t, int64_t, bool)> EncodeOutputReadyCallback;
 typedef std::function<void(libcamera::ControlList &)> MetadataReadyCallback;
+template <typename T = VideoOptions>
 
 class RPiCamEncoder : public RPiCamApp
 {
@@ -22,7 +23,7 @@ public:
 	using Stream = libcamera::Stream;
 	using FrameBuffer = libcamera::FrameBuffer;
 
-	RPiCamEncoder() : RPiCamApp(std::make_unique<VideoOptions>()) {}
+	RPiCamEncoder() : RPiCamApp(std::make_unique<T>()) {}
 
 	void StartEncoder()
 	{
@@ -51,7 +52,7 @@ public:
 		}
 		encoder_->EncodeBuffer(buffer->planes()[0].fd.get(), span.size(), mem, info, timestamp_ns / 1000);
 	}
-	VideoOptions *GetOptions() const { return static_cast<VideoOptions *>(options_.get()); }
+	T *GetOptions() const { return static_cast<T *>(options_.get()); }
 	void StopEncoder() { encoder_.reset(); }
 
 protected:

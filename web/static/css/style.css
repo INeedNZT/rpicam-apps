@@ -4,8 +4,6 @@
  * Copyright (c) 2024 creativeLabs Łukasz Holeczek
  * Licensed under MIT (https://github.com/coreui/coreui/blob/main/LICENSE)
  */
-@import "../../node_modules/video.js/dist/video-js.css";
-@import "../../node_modules/videojs-playlist-ui/dist/videojs-playlist-ui.css";
 :root,
 [data-coreui-theme=light] {
   --cui-blue: #0d6efd;

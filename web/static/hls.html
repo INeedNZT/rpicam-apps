@@ -1,0 +1,171 @@
+<!DOCTYPE html><!--
+* CoreUI - Free Bootstrap Admin Template
+* @version v5.1.1
+* @link https://coreui.io/product/free-bootstrap-admin-template/
+* Copyright (c) 2024 creativeLabs Łukasz Holeczek
+* Licensed under MIT (https://github.com/coreui/coreui-free-bootstrap-admin-template/blob/main/LICENSE)
+-->
+<html lang="en">
+  <head>
+    <base href="./">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="description" content="Raspberrypi Surveillance User Interface">
+    <meta name="keyword" content="RpiCam,Bootstrap,Admin,Open,Source,CSS,HTML">
+    <title>Raspberrypi Surveillance Admin</title>
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="assets/favicon/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+    <!-- Vendors styles-->
+    <link rel="stylesheet" href="vendors/simplebar/css/simplebar.css">
+    <link rel="stylesheet" href="css/vendors/simplebar.css">
+    <link rel="apple-touch-icon" sizes="96x96" href="assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
+    <link rel="mainfest" href="assets/favicon/mainfest.json">
+    <!-- Main styles for this application-->
+    <link href="css/style.css" rel="stylesheet">
+    <style>
+      .header.mb-4 {
+        margin-bottom: 0 !important;
+      }
+
+      .body {
+        display: flex !important;
+      }
+
+      .container-lg {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        max-width: none !important;
+      }
+
+      .container-lg.px-4 {
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+      }
+
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background-color: rgba(50, 50, 50, .3);
+        border-radius: 1em;
+      }
+
+      ::-webkit-scrollbar-track {
+        background-color: #f1f1f1;
+        border-radius: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
+      <div class="sidebar-header border-bottom">
+        <div class="sidebar-brand d-flex align-items-start"><img class="sidebar-brand-full" height="32" alt="Logo" src="assets/brand/logo.svg"><span class="mt-1">Rpicam-Surveillance</span></div>
+        <button class="btn-close d-lg-none" type="button" data-coreui-dismiss="offcanvas" data-coreui-theme="dark" aria-label="Close" onclick="coreui.Sidebar.getInstance(document.querySelector(&quot;#sidebar&quot;)).toggle()"></button>
+      </div>
+      <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
+        <li class="nav-item"><a class="nav-link" href="index.html">
+            <svg class="nav-icon">
+              <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-video"></use>
+            </svg> Live Stream</a></li>
+        <li class="nav-item"><a class="nav-link" href="playback.html">
+            <svg class="nav-icon">
+              <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-storage"></use>
+            </svg> Footage Playback</a></li>
+        <li class="nav-item"><a class="nav-link" href="events.html">
+            <svg class="nav-icon">
+              <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-warning"></use>
+            </svg> Security Events</a></li>
+      </ul>
+    </div>
+    <div class="wrapper d-flex flex-column min-vh-100">
+      <header class="header header-sticky p-0 mb-4">
+        <div class="container-fluid border-bottom px-4">
+          <button class="header-toggler" type="button" onclick="coreui.Sidebar.getInstance(document.querySelector('#sidebar')).toggle()" style="margin-inline-start: -14px;">
+            <svg class="icon icon-lg">
+              <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-menu"></use>
+            </svg>
+          </button>
+          <ul class="header-nav">
+            <li class="nav-item py-1">
+              <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
+            </li>
+            <li class="nav-item dropdown">
+              <button class="btn btn-link nav-link py-2 px-2 d-flex align-items-center" type="button" aria-expanded="false" data-coreui-toggle="dropdown">
+                <svg class="icon icon-lg theme-icon-active">
+                  <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-contrast"></use>
+                </svg>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" style="--cui-dropdown-min-width: 8rem;">
+                <li>
+                  <button class="dropdown-item d-flex align-items-center" type="button" data-coreui-theme-value="light">
+                    <svg class="icon icon-lg me-3">
+                      <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-sun"></use>
+                    </svg>Light
+                  </button>
+                </li>
+                <li>
+                  <button class="dropdown-item d-flex align-items-center" type="button" data-coreui-theme-value="dark">
+                    <svg class="icon icon-lg me-3">
+                      <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-moon"></use>
+                    </svg>Dark
+                  </button>
+                </li>
+                <li>
+                  <button class="dropdown-item d-flex align-items-center active" type="button" data-coreui-theme-value="auto">
+                    <svg class="icon icon-lg me-3">
+                      <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-contrast"></use>
+                    </svg>Auto
+                  </button>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </header>
+      <div class="body flex-grow-1">
+        <div class="container-lg px-4">
+          <div style="height: 80%;">
+            <video class="video-js" id="my-video" controls="" preload="auto" autoplay="">
+              <p class="vjs-no-js"></p>To view this video please enable JavaScript, and consider upgrading to a<a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
+            </video>
+          </div>
+          <div class="vjs-playlist" style="height: 20%;"></div>
+        </div>
+      </div>
+      <footer class="footer px-4">
+        <div>Admin Panel for <a href="https://github.com/INeedNZT/rpicam-apps">Rpicam-Surveillance Project</a></div>
+        <div class="ms-auto d-none d-sm-block">Powered by&nbsp;<a href="https://coreui.io/product/free-bootstrap-admin-template/">CoreUI</a></div>
+      </footer>
+    </div>
+    <!-- CoreUI and necessary plugins-->
+    <script src="vendors/@coreui/coreui/js/coreui.bundle.min.js"></script>
+    <script src="vendors/simplebar/js/simplebar.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/color-modes.js"></script>
+    <script>
+      const header = document.querySelector('header.header');
+
+      document.addEventListener('scroll', () => {
+        if (header) {
+          header.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0);
+        }
+      });
+    </script>
+    <script src="vendors/@coreui/utils/js/index.js"></script>
+    <script src="vendors/video.js/js/video.js"></script>
+    <script src="vendors/videojs-playlist/js/videojs-playlist.js"></script>
+    <script src="vendors/videojs-playlist-ui/js/videojs-playlist-ui.js"></script>
+    <script src="/node_modules/lozad/dist/lozad.min.js"></script>
+    <script src="js/playback.js"></script>
+    <script>
+    </script>
+
+  </body>
+</html>

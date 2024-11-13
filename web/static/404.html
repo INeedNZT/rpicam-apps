@@ -1,0 +1,110 @@
+<!DOCTYPE html><!--
+* CoreUI - Free Bootstrap Admin Template
+* @version v5.1.1
+* @link https://coreui.io/product/free-bootstrap-admin-template/
+* Copyright (c) 2024 creativeLabs Łukasz Holeczek
+* Licensed under MIT (https://github.com/coreui/coreui-free-bootstrap-admin-template/blob/main/LICENSE)
+-->
+<html lang="en">
+  <head>
+    <base href="./">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <meta name="description" content="Raspberrypi Surveillance User Interface">
+    <meta name="keyword" content="RpiCam,Bootstrap,Admin,Open,Source,CSS,HTML">
+    <title>Raspberrypi Surveillance Admin</title>
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="assets/favicon/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+    <!-- Vendors styles-->
+    <link rel="stylesheet" href="vendors/simplebar/css/simplebar.css">
+    <link rel="stylesheet" href="css/vendors/simplebar.css">
+    <link rel="apple-touch-icon" sizes="96x96" href="assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
+    <link rel="mainfest" href="assets/favicon/mainfest.json">
+    <!-- Main styles for this application-->
+    <link href="css/style.css" rel="stylesheet">
+    <style>
+      @font-face {
+        font-family: 'VT323';
+        font-style: normal;
+        font-weight: normal;
+        src: local('VT323'), url('/assets/fonts/VT323.woff2') format('woff2');
+      }
+
+      .pixel-text {
+        font-family: 'VT323', var(--cui-body-font-family);
+        font-weight: normal;
+        text-align: left;
+      }
+
+      .title {
+        font-size: 22vmin;
+        line-height: 1.2;
+      }
+
+      .subtitle {
+        font-size: 8vmin;
+        line-height: 1;
+      }
+
+      .words {
+        font-size: 4vmin;
+        line-height: 1;
+      }
+
+      .img-wrapper {
+        text-align: center;
+      }
+
+      img {
+        height: 50vh;
+        width: auto;
+        max-width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-md-8">
+            <div class="clearfix">
+              <div class="title me-4 pixel-text text-center">404</div>
+              <div class="img-wrapper"><img src="/assets/img/rpicam-surv.jpg"></div>
+              <div class="subtitle pt-3 pixel-text text-center">Oops! You're lost.</div>
+              <div class="words pt-2 pixel-text text-center">The page you are looking for was not found.</div>
+            </div>
+            <!-- Just keep it for color-modes.js execution--><span class="d-inline theme-icon-active" data-coreui-theme-value="light">
+              <svg style="height: 0;">
+                <use xlink:href="#icon-light"></use>
+              </svg></span><span class="d-inline" data-coreui-theme-value="dark">
+              <svg style="height: 0;">
+                <use xlink:href="#icon-dark"></use>
+              </svg></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- CoreUI and necessary plugins-->
+    <script src="vendors/@coreui/coreui/js/coreui.bundle.min.js"></script>
+    <script src="vendors/simplebar/js/simplebar.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/color-modes.js"></script>
+    <script>
+      const header = document.querySelector('header.header');
+
+      document.addEventListener('scroll', () => {
+        if (header) {
+          header.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0);
+        }
+      });
+    </script>
+    <script>
+    </script>
+
+  </body>
+</html>

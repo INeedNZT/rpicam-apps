@@ -1,15 +1,112 @@
+#include <ctime>
+#include <filesystem>
+#include <fstream>
+#include <mutex>
 #include <thread>
 
 #include "mongoose.h"
 #include "web_server.hpp"
 
+struct Log
+{
+	std::string const log_dir;
+	std::string log_fname;
+	std::ofstream log_ofs;
+	bool new_line;
+	std::mutex log_mutex;
+
+	Log(const std::string &log_dir) : log_dir(log_dir), log_fname(""), new_line(true), log_mutex() {}
+
+	~Log()
+	{
+		if (log_ofs.is_open())
+			log_ofs.close();
+	}
+};
+
+static std::string get_current_date()
+{
+	std::time_t t = std::time(nullptr);
+	std::tm tm = *std::localtime(&t);
+
+	char buffer[11];
+	std::strftime(buffer, sizeof(buffer), "%Y-%m-%d", &tm);
+
+	return std::string(buffer);
+}
+
+static std::string get_current_time()
+{
+	std::time_t t = std::time(nullptr);
+	std::tm tm = *std::localtime(&t);
+
+	char buffer[9];
+	std::strftime(buffer, sizeof(buffer), "%H:%M:%S", &tm);
+
+	return std::string(buffer);
+}
+
+static void log_fn(char c, void *param)
+{
+	struct Log *log = static_cast<Log *>(param);
+	std::string current_date = get_current_date();
+
+	if (log->log_fname != current_date)
+	{
+		if (log->log_ofs.is_open())
+		{
+			log->log_ofs.close();
+		}
+
+		log->log_fname = current_date;
+
+		if (!std::filesystem::exists(log->log_dir))
+			std::filesystem::create_directories(log->log_dir);
+
+		std::string log_file_path = log->log_dir + "/" + log->log_fname + ".log";
+		log->log_ofs.open(log_file_path, std::ios::out | std::ios::app);
+	}
+
+	if (log->log_ofs.is_open())
+	{
+		std::lock_guard<std::mutex> guard(log->log_mutex);
+
+		if (log->new_line)
+		{
+			std::string current_time = get_current_time();
+			log->log_ofs << "[" << current_time << "] ";
+			log->new_line = false;
+		}
+
+		log->log_ofs << c;
+
+		if (c == '\n')
+		{
+			log->new_line = true;
+			log->log_ofs.flush();
+		}
+	}
+	else
+	{
+		std::cerr << "Error opening log file" << std::endl;
+	}
+}
+
 class MongooseServer : public WebServer
 {
 public:
-	MongooseServer(const std::string &host, int port, int max_connections)
-		: WebServer(host, port, max_connections), event_loop_thread(nullptr)
+	MongooseServer(SurvOptions const *options) : WebServer(options), event_loop_thread_(nullptr)
 	{
-		mg_mgr_init(&mgr);
+		page404_ = options->web_root_directory + "/404.html";
+		root_dir_ = options->web_root_directory + ",/footage=" + options->footage_directory;
+		http_server_options_ = {};
+		http_server_options_.page404 = page404_.c_str();
+		http_server_options_.root_dir = root_dir_.c_str();
+
+		Log *log = new Log { options->web_log_directory };
+
+		mg_log_set_fn(log_fn, static_cast<void *>(log));
+		mg_mgr_init(&mgr_);
 	}
 
 	~MongooseServer() { Stop(); }
@@ -22,11 +119,11 @@ public:
 		}
 
 		std::string url = host_ + ":" + std::to_string(port_);
-		mg_http_listen(&mgr, url.c_str(), eventHandler, this);
+		mg_http_listen(&mgr_, url.c_str(), eventHandler, this);
 
 		running_ = true;
 
-		event_loop_thread = new std::thread(&MongooseServer::run, this);
+		event_loop_thread_ = new std::thread(&MongooseServer::run, this);
 	}
 
 	void Stop() override
@@ -38,25 +135,29 @@ public:
 
 		running_ = false;
 
-		if (event_loop_thread && event_loop_thread->joinable())
+		if (event_loop_thread_ && event_loop_thread_->joinable())
 		{
-			event_loop_thread->join();
+			event_loop_thread_->join();
 		}
 
-		delete event_loop_thread;
-		event_loop_thread = nullptr;
+		delete event_loop_thread_;
+		event_loop_thread_ = nullptr;
 
-		mg_mgr_free(&mgr);
+		mg_mgr_free(&mgr_);
 	}
 
 private:
-	struct mg_mgr mgr;
-	std::thread *event_loop_thread;
+	std::string page404_;
+	std::string root_dir_;
 
-	static inline int numconns(struct mg_mgr *mgr)
+	struct mg_mgr mgr_;
+	std::thread *event_loop_thread_;
+	struct mg_http_serve_opts http_server_options_;
+
+	static inline int numconns(struct mg_mgr *mgr_)
 	{
 		int count = 0;
-		for (struct mg_connection *c = mgr->conns; c != nullptr; c = c->next)
+		for (struct mg_connection *c = mgr_->conns; c != nullptr; c = c->next)
 		{
 			count++;
 		}
@@ -69,7 +170,7 @@ private:
 
 		if (ev == MG_EV_ACCEPT)
 		{
-			if (numconns(&server->mgr) >= server->max_connections_)
+			if (numconns(&server->mgr_) > server->max_connections_)
 			{
 				MG_ERROR(("Too many connections"));
 				c->is_closing = 1;
@@ -78,24 +179,15 @@ private:
 
 		if (ev == MG_EV_HTTP_MSG)
 		{
-			static struct mg_http_serve_opts opts;
-			static bool initialized = false;
-			if (!initialized)
-			{
-				opts.root_dir = "/var/www/static";
-				initialized = true;
-			}
-
 			struct mg_http_message *hm = (struct mg_http_message *)ev_data;
 
 			if (mg_match(hm->uri, mg_str("/api/hello"), NULL))
 			{
-				// Return JSON response
 				mg_http_reply(c, 200, "Content-Type: application/json\r\n", "{%m:%d}\n", MG_ESC("status"), 1);
 			}
 			else
 			{
-				mg_http_serve_dir(c, hm, &opts);
+				mg_http_serve_dir(c, hm, &server->http_server_options_);
 			}
 		}
 
@@ -108,12 +200,12 @@ private:
 	{
 		while (running_)
 		{
-			mg_mgr_poll(&mgr, 1000);
+			mg_mgr_poll(&mgr_, 1000);
 		}
 	}
 };
 
-std::unique_ptr<WebServer> WebServer::Create(const std::string &host, int port, int max_connections)
+std::unique_ptr<WebServer> WebServer::Create(SurvOptions const *options)
 {
-	return std::make_unique<MongooseServer>(host, port, max_connections);
+	return std::make_unique<MongooseServer>(options);
 }

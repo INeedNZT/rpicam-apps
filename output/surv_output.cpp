@@ -47,11 +47,11 @@ static bool isNewDay(int64_t timestamp_us)
 }
 
 SurvOutput::SurvOutput(SurvOptions const *options)
-	: Output(options), hls_directory_(options->hls_directory), segment_index_(0), segment_start_time_(0),
+	: Output(options), footage_directory_(options->footage_directory), segment_index_(0), segment_start_time_(0),
 	  segment_duration_(options->segment_duration), playlist_start_time_(0), playlist_interval_duration_(60 * 60),
 	  sys_start_timestamp_(0)
 {
-	std::filesystem::create_directories(hls_directory_);
+	std::filesystem::create_directories(footage_directory_);
 
 	avformat_alloc_output_context2(&format_ctx_, nullptr, "mpegts", nullptr);
 	if (!format_ctx_)
@@ -115,7 +115,7 @@ void SurvOutput::startNewPlaylist(int64_t timestamp_us)
 {
 	playlist_start_time_ = timestamp_us;
 	int64_t sys_timestamp = getSysTimestamp(playlist_start_time_);
-	std::string date_directory = hls_directory_ + "/" + getDateString(sys_timestamp);
+	std::string date_directory = footage_directory_ + "/" + getDateString(sys_timestamp);
 	std::filesystem::create_directories(date_directory);
 
 	std::string time_str = getTimeString(sys_timestamp);

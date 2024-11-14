@@ -17,28 +17,28 @@ using namespace std::placeholders;
 class RPiCamSurvApp : public RPiCamEncoder<SurvOptions>
 {
 public:
-	RPiCamSurvApp() : RPiCamEncoder<SurvOptions>(), webServer_(nullptr) {}
+	RPiCamSurvApp() : RPiCamEncoder<SurvOptions>(), web_server_(nullptr) {}
 
 	void StartWebServer()
 	{
-		if (!webServer_)
+		if (!web_server_)
 		{
-			webServer_ = WebServer::Create("127.0.0.1", 8000, 100);
-			webServer_->Start();
+			web_server_ = WebServer::Create(GetOptions());
+			web_server_->Start();
 		}
 	}
 
 	void StopWebServer()
 	{
-		if (webServer_)
+		if (web_server_)
 		{
-			webServer_->Stop();
-			webServer_.reset();
+			web_server_->Stop();
+			web_server_.reset();
 		}
 	}
 
 private:
-	std::unique_ptr<WebServer> webServer_;
+	std::unique_ptr<WebServer> web_server_;
 };
 
 static int signal_received;

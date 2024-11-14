@@ -29,7 +29,7 @@ private:
     
     int64_t getSysTimestamp(int64_t timestamp);
 
-    std::string hls_directory_;
+    std::string footage_directory_;
     std::string playlist_directory_;
     std::ofstream playlist_file_;
     std::ofstream segment_file_;

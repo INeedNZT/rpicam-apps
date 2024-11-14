@@ -10,7 +10,7 @@
             "args": [
                 "-t", "0",
                 "-r", "--inline",
-                "--hls-directory", "/home/xjm/hls",
+                "--web-host", "0.0.0.0",
                 "--post-process-file", "assets/surveillance.json"
             ],
             "cwd": "${workspaceFolder}",

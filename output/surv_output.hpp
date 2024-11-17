@@ -23,7 +23,7 @@ protected:
     void timestampReady(int64_t timestamp) override;
 
 private:
-    void startNewPlaylist(void *mem, size_t size, int64_t timestamp_us, uint32_t flags);
+    void startNewPlaylist(void *mem, size_t size, int64_t timestamp_us);
     void finalizePlaylist();
     void startNewSegment();
     void finalizeSegment(int64_t timestamp_us);

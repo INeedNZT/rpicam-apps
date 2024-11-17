@@ -74,27 +74,30 @@ void SurvOutput::outputBuffer(void *mem, size_t size, int64_t timestamp_us, uint
 {
 	int64_t sys_timestamp = getSysTimestamp(timestamp_us);
 
-	if (isNewDay(sys_timestamp) || timestamp_us == 0 ||
-		timestamp_us - playlist_start_time_ >= playlist_interval_duration_ * 1000000)
+	if (flags & FLAG_KEYFRAME)
 	{
-		if (segment_index_ > 0)
-			finalizeSegment(timestamp_us);
+		if (isNewDay(sys_timestamp) || timestamp_us == 0 ||
+			timestamp_us - playlist_start_time_ >= playlist_interval_duration_ * 1000000)
+		{
+			if (segment_index_ > 0)
+				finalizeSegment(timestamp_us);
 
-		if (timestamp_us != 0)
-			finalizePlaylist();
+			if (timestamp_us != 0)
+				finalizePlaylist();
 
-		startNewPlaylist(mem, size, timestamp_us, flags);
-		startNewSegment();
-		segment_start_time_ = timestamp_us;
-	}
+			startNewPlaylist(mem, size, timestamp_us);
+			startNewSegment();
+			segment_start_time_ = timestamp_us;
+		}
 
-	if ((flags & FLAG_KEYFRAME) && (timestamp_us - segment_start_time_ >= segment_duration_ * 1000000))
-	{
-		if (segment_index_ > 0)
-			finalizeSegment(timestamp_us);
+		if (timestamp_us - segment_start_time_ >= segment_duration_ * 1000000)
+		{
+			if (segment_index_ > 0)
+				finalizeSegment(timestamp_us);
 
-		startNewSegment();
-		segment_start_time_ = timestamp_us;
+			startNewSegment();
+			segment_start_time_ = timestamp_us;
+		}
 	}
 
 	writeSegmentData(mem, size, timestamp_us, flags);
@@ -105,7 +108,7 @@ void SurvOutput::timestampReady(int64_t timestamp)
 	//TODO
 }
 
-void SurvOutput::startNewPlaylist(void *mem, size_t size, int64_t timestamp_us, uint32_t flags)
+void SurvOutput::startNewPlaylist(void *mem, size_t size, int64_t timestamp_us)
 {
 	playlist_start_time_ = timestamp_us;
 	int64_t sys_timestamp = getSysTimestamp(playlist_start_time_);
@@ -113,7 +116,7 @@ void SurvOutput::startNewPlaylist(void *mem, size_t size, int64_t timestamp_us, 
 	std::string date_directory = getDatePath(footage_directory_, sys_time_sec);
 	std::filesystem::create_directories(date_directory);
 	std::string date_thumb_path = date_directory + "/" + THUMB_NAME;
-	if ((flags & FLAG_KEYFRAME) && !std::filesystem::exists(date_thumb_path))
+	if (!std::filesystem::exists(date_thumb_path))
 	{
 		// Save first frame as thumbnail
 		saveThumbnail(mem, size, timestamp_us, date_thumb_path);
@@ -122,7 +125,7 @@ void SurvOutput::startNewPlaylist(void *mem, size_t size, int64_t timestamp_us, 
 	playlist_directory_ = date_directory + "/" + std::to_string(sys_time_sec);
 	std::filesystem::create_directories(playlist_directory_);
 	std::string playlist_thumb_path = playlist_directory_ + "/" + THUMB_NAME;
-	if ((flags & FLAG_KEYFRAME) && !std::filesystem::exists(playlist_thumb_path))
+	if (!std::filesystem::exists(playlist_thumb_path))
 	{
 		saveThumbnail(mem, size, timestamp_us, playlist_thumb_path);
 	}
@@ -201,63 +204,65 @@ void SurvOutput::writeSegmentData(void *mem, size_t size, int64_t timestamp_us, 
 
 void SurvOutput::saveThumbnail(void *mem, size_t size, int64_t timestamp_us, const std::string &save_path)
 {
-    AVCodecContext *codec_ctx = nullptr;
-    AVPacket *pkt = av_packet_alloc();
-    pkt->data = reinterpret_cast<uint8_t *>(mem);
-    pkt->size = static_cast<int>(size);
+	AVCodecContext *codec_ctx = nullptr;
+	AVPacket *pkt = av_packet_alloc();
+	pkt->data = reinterpret_cast<uint8_t *>(mem);
+	pkt->size = static_cast<int>(size);
 
-    const AVCodec *codec = avcodec_find_decoder(AV_CODEC_ID_H264);
-    codec_ctx = avcodec_alloc_context3(codec);
-    avcodec_open2(codec_ctx, codec, nullptr);
+	const AVCodec *codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+	codec_ctx = avcodec_alloc_context3(codec);
+	avcodec_open2(codec_ctx, codec, nullptr);
 
-    AVFrame *frame = av_frame_alloc();
-    avcodec_send_packet(codec_ctx, pkt);
-    avcodec_receive_frame(codec_ctx, frame);
+	AVFrame *frame = av_frame_alloc();
+	avcodec_send_packet(codec_ctx, pkt);
+	avcodec_receive_frame(codec_ctx, frame);
 
 	AVFrame *rgb_frame = av_frame_alloc();
-    int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, frame->width, frame->height, 1);
-    uint8_t *buffer = (uint8_t *)av_malloc(num_bytes);
-    av_image_fill_arrays(rgb_frame->data, rgb_frame->linesize, buffer, AV_PIX_FMT_RGB24, frame->width, frame->height, 1);
+	int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, frame->width, frame->height, 1);
+	uint8_t *buffer = (uint8_t *)av_malloc(num_bytes);
+	av_image_fill_arrays(rgb_frame->data, rgb_frame->linesize, buffer, AV_PIX_FMT_RGB24, frame->width, frame->height,
+						 1);
 
-    struct SwsContext *sws_ctx = sws_getContext(frame->width, frame->height, codec_ctx->pix_fmt,
-                                                frame->width, frame->height, AV_PIX_FMT_RGB24, 0, nullptr, nullptr, nullptr);
-    sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, rgb_frame->data, rgb_frame->linesize);
+	struct SwsContext *sws_ctx = sws_getContext(frame->width, frame->height, codec_ctx->pix_fmt, frame->width,
+												frame->height, AV_PIX_FMT_RGB24, 0, nullptr, nullptr, nullptr);
+	sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, rgb_frame->data, rgb_frame->linesize);
 
-    FILE *jpeg_file = fopen(save_path.c_str(), "wb");
-    if (!jpeg_file)
-        throw std::runtime_error("Error opening JPEG file for writing");
+	FILE *jpeg_file = fopen(save_path.c_str(), "wb");
+	if (!jpeg_file)
+		throw std::runtime_error("Error opening JPEG file for writing");
 
-    struct jpeg_compress_struct cinfo;
-    struct jpeg_error_mgr jerr;
-    cinfo.err = jpeg_std_error(&jerr);
-    jpeg_create_compress(&cinfo);
-    jpeg_stdio_dest(&cinfo, jpeg_file);
+	struct jpeg_compress_struct cinfo;
+	struct jpeg_error_mgr jerr;
+	cinfo.err = jpeg_std_error(&jerr);
+	jpeg_create_compress(&cinfo);
+	jpeg_stdio_dest(&cinfo, jpeg_file);
 
-    cinfo.image_width = frame->width;
-    cinfo.image_height = frame->height;
-    cinfo.input_components = 3;
-    cinfo.in_color_space = JCS_RGB;
-    jpeg_set_defaults(&cinfo);
-    jpeg_set_quality(&cinfo, 90, TRUE);
+	cinfo.image_width = frame->width;
+	cinfo.image_height = frame->height;
+	cinfo.input_components = 3;
+	cinfo.in_color_space = JCS_RGB;
+	jpeg_set_defaults(&cinfo);
+	jpeg_set_quality(&cinfo, 90, TRUE);
 
-    jpeg_start_compress(&cinfo, TRUE);
+	jpeg_start_compress(&cinfo, TRUE);
 
-    JSAMPROW row_pointer[1];
+	JSAMPROW row_pointer[1];
 
-    for (int y = 0; y < frame->height; y++) {
-        row_pointer[0] = &rgb_frame->data[0][y * rgb_frame->linesize[0]];
-        jpeg_write_scanlines(&cinfo, row_pointer, 1);
-    }
+	for (int y = 0; y < frame->height; y++)
+	{
+		row_pointer[0] = &rgb_frame->data[0][y * rgb_frame->linesize[0]];
+		jpeg_write_scanlines(&cinfo, row_pointer, 1);
+	}
 
-    jpeg_finish_compress(&cinfo);
-    fclose(jpeg_file);
+	jpeg_finish_compress(&cinfo);
+	fclose(jpeg_file);
 
-    jpeg_destroy_compress(&cinfo);
-	
-    av_packet_free(&pkt);
-	av_frame_free(&rgb_frame); 
-    av_frame_free(&frame);
-    avcodec_free_context(&codec_ctx);
+	jpeg_destroy_compress(&cinfo);
+
+	av_packet_free(&pkt);
+	av_frame_free(&rgb_frame);
+	av_frame_free(&frame);
+	avcodec_free_context(&codec_ctx);
 	sws_freeContext(sws_ctx);
 	av_free(buffer);
 }

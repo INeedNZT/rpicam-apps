@@ -14,19 +14,17 @@
     <meta name="description" content="Raspberrypi Surveillance User Interface">
     <meta name="keyword" content="RpiCam,Bootstrap,Admin,Open,Source,CSS,HTML">
     <title>Raspberrypi Surveillance Admin</title>
-    <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-TileImage" content="assets/favicon/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
     <!-- Vendors styles-->
     <link rel="stylesheet" href="vendors/simplebar/css/simplebar.css">
-    <link rel="stylesheet" href="css/vendors/simplebar.css">
-    <link rel="apple-touch-icon" sizes="96x96" href="assets/favicon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
-    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
-    <link rel="mainfest" href="assets/favicon/mainfest.json">
+    <link rel="stylesheet" href="/css/vendors/simplebar.css">
+    <link rel="apple-touch-icon" sizes="96x96" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon/favicon.ico">
+    <link rel="mainfest" href="/assets/favicon/mainfest.json">
     <!-- Main styles for this application-->
-    <link href="css/style.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
   </head>
   <body>
     <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
@@ -96,49 +94,25 @@
       </header>
       <div class="body flex-grow-1">
         <div class="container-lg px-4">
-          <div class="row">
-            <div class="col-12 col-md-6 col-lg-4 mb-4">
-              <div class="card"><img class="card-img-top" src="assets/img/full.jpg" alt="">
+          <div class="row" id="surv-card-container">
+            <div class="col-12 col-md-6 col-lg-4 mb-4" id="loading-placeholder">
+              <div class="card">
                 <svg class="docs-placeholder-img card-img-top" width="100%" height="180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder" preserveAspectRatio="xMidYMid slice" focusable="false">
                   <title>Placeholder</title>
                   <rect width="100%" height="100%" fill="#868e96"></rect>
                 </svg>
                 <div class="card-body">
-                  <h5 class="card-title">2024 11-10 Sunday</h5>
-                  <div class="h5 card-title placeholder-glow"><span class="placeholder col-6"></span></div><a class="btn btn-success" href="hls.html">
-                    <svg class="icon me-1">
-                      <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-media-play"></use>
-                    </svg>Playback</a><a class="btn btn-success disabled placeholder" href="javascript:void(0)" tabindex="-1">
+                  <div class="h5 card-title placeholder-glow"><span class="placeholder col-6"></span></div><a class="btn btn-success disabled placeholder" href="javascript:void(0)" tabindex="-1">
                     <svg class="icon me-1">
                       <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-media-play"></use>
                     </svg>Playback</a>
                 </div>
               </div>
             </div>
-            <div class="col-12 col-md-6 col-lg-4 mb-4">
-              <div class="card"><img class="card-img-top" src="assets/img/full.jpg" alt="">
+            <div class="surv-card col-12 col-md-6 col-lg-4 mb-4" style="display: none;">
+              <div class="card"><img class="card-img-top" src="/assets/img/full.jpg" alt="">
                 <div class="card-body">
-                  <h5 class="card-title">2024 11-10 Sunday</h5><a class="btn btn-success" href="hls.html">
-                    <svg class="icon me-1">
-                      <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-media-play"></use>
-                    </svg>Playback</a>
-                </div>
-              </div>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4 mb-4">
-              <div class="card"><img class="card-img-top" src="assets/img/full.jpg" alt="">
-                <div class="card-body">
-                  <h5 class="card-title">2024 11-10 Sunday</h5><a class="btn btn-success" href="hls.html">
-                    <svg class="icon me-1">
-                      <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-media-play"></use>
-                    </svg>Playback</a>
-                </div>
-              </div>
-            </div>
-            <div class="col-12 col-md-6 col-lg-4 mb-4">
-              <div class="card"><img class="card-img-top docs-placeholder-img" src="assets/img/full.jpg" alt="">
-                <div class="card-body">
-                  <h5 class="card-title">2024 11-10 Sunday</h5><a class="btn btn-success" href="hls.html">
+                  <h5 class="card-title">#########</h5><a class="btn btn-success" href="#">
                     <svg class="icon me-1">
                       <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-media-play"></use>
                     </svg>Playback</a>
@@ -156,8 +130,8 @@
     <!-- CoreUI and necessary plugins-->
     <script src="vendors/@coreui/coreui/js/coreui.bundle.min.js"></script>
     <script src="vendors/simplebar/js/simplebar.min.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/color-modes.js"></script>
+    <script src="/js/config.js"></script>
+    <script src="/js/color-modes.js"></script>
     <script>
       const header = document.querySelector('header.header');
 
@@ -168,6 +142,7 @@
       });
     </script>
     <script src="vendors/@coreui/utils/js/index.js"></script>
+    <script src="/js/playback.js"></script>
     <script>
     </script>
 

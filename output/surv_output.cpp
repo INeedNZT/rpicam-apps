@@ -1,27 +1,7 @@
 #include <filesystem>
+#include <jpeglib.h>
 
 #include "surv_output.hpp"
-
-static std::string getDateString(int64_t timestamp_us)
-{
-	time_t time_in_seconds = static_cast<time_t>(timestamp_us / 1000000);
-	std::tm tm = *std::localtime(&time_in_seconds);
-
-	char buffer[16];
-	strftime(buffer, sizeof(buffer), "%Y%m%d", &tm);
-	return std::string(buffer);
-}
-
-static std::string getTimeString(int64_t timestamp)
-{
-	time_t time_in_seconds = static_cast<time_t>(timestamp / 1000000);
-
-	std::tm tm = *std::localtime(&time_in_seconds);
-
-	char buffer[20];
-	strftime(buffer, sizeof(buffer), "%Y%m%d_%H%M", &tm);
-	return std::string(buffer);
-}
 
 static bool isNewDay(int64_t timestamp_us)
 {
@@ -44,6 +24,20 @@ static bool isNewDay(int64_t timestamp_us)
 	}
 
 	return false;
+}
+
+static std::string getDatePath(const std::string &footage_directory, time_t timestamp_sec)
+{
+	std::string date_str = SurvOptions::ToTimeStr(timestamp_sec, "%Y-%m-%d");
+
+	for (const auto &entry : std::filesystem::directory_iterator(footage_directory))
+	{
+		time_t directory_date = static_cast<time_t>(std::stoll(entry.path().filename()));
+		if (entry.is_directory() && SurvOptions::ToTimeStr(directory_date, "%Y-%m-%d") == date_str)
+			return footage_directory + "/" + std::to_string(directory_date);
+	}
+
+	return footage_directory + "/" + std::to_string(timestamp_sec);
 }
 
 SurvOutput::SurvOutput(SurvOptions const *options)
@@ -84,12 +78,12 @@ void SurvOutput::outputBuffer(void *mem, size_t size, int64_t timestamp_us, uint
 		timestamp_us - playlist_start_time_ >= playlist_interval_duration_ * 1000000)
 	{
 		if (segment_index_ > 0)
-            finalizeSegment(timestamp_us);
+			finalizeSegment(timestamp_us);
 
 		if (timestamp_us != 0)
 			finalizePlaylist();
 
-		startNewPlaylist(timestamp_us);
+		startNewPlaylist(mem, size, timestamp_us, flags);
 		startNewSegment();
 		segment_start_time_ = timestamp_us;
 	}
@@ -111,18 +105,29 @@ void SurvOutput::timestampReady(int64_t timestamp)
 	//TODO
 }
 
-void SurvOutput::startNewPlaylist(int64_t timestamp_us)
+void SurvOutput::startNewPlaylist(void *mem, size_t size, int64_t timestamp_us, uint32_t flags)
 {
 	playlist_start_time_ = timestamp_us;
 	int64_t sys_timestamp = getSysTimestamp(playlist_start_time_);
-	std::string date_directory = footage_directory_ + "/" + getDateString(sys_timestamp);
+	time_t sys_time_sec = static_cast<time_t>(sys_timestamp / 1000000);
+	std::string date_directory = getDatePath(footage_directory_, sys_time_sec);
 	std::filesystem::create_directories(date_directory);
+	std::string date_thumb_path = date_directory + "/" + THUMB_NAME;
+	if ((flags & FLAG_KEYFRAME) && !std::filesystem::exists(date_thumb_path))
+	{
+		// Save first frame as thumbnail
+		saveThumbnail(mem, size, timestamp_us, date_thumb_path);
+	}
 
-	std::string time_str = getTimeString(sys_timestamp);
-	playlist_directory_ = date_directory + "/" + time_str;
+	playlist_directory_ = date_directory + "/" + std::to_string(sys_time_sec);
 	std::filesystem::create_directories(playlist_directory_);
+	std::string playlist_thumb_path = playlist_directory_ + "/" + THUMB_NAME;
+	if ((flags & FLAG_KEYFRAME) && !std::filesystem::exists(playlist_thumb_path))
+	{
+		saveThumbnail(mem, size, timestamp_us, playlist_thumb_path);
+	}
 
-	std::string playlist_filename = playlist_directory_ + "/" + time_str + ".m3u8";
+	std::string playlist_filename = playlist_directory_ + "/" + PLAYLIST_NAME;
 	playlist_file_.open(playlist_filename, std::ios::out | std::ios::trunc);
 	if (!playlist_file_)
 		throw std::runtime_error("Failed to create playlist file: " + playlist_filename);
@@ -192,6 +197,69 @@ void SurvOutput::writeSegmentData(void *mem, size_t size, int64_t timestamp_us, 
 	}
 
 	av_packet_free(&pkt);
+}
+
+void SurvOutput::saveThumbnail(void *mem, size_t size, int64_t timestamp_us, const std::string &save_path)
+{
+    AVCodecContext *codec_ctx = nullptr;
+    AVPacket *pkt = av_packet_alloc();
+    pkt->data = reinterpret_cast<uint8_t *>(mem);
+    pkt->size = static_cast<int>(size);
+
+    const AVCodec *codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+    codec_ctx = avcodec_alloc_context3(codec);
+    avcodec_open2(codec_ctx, codec, nullptr);
+
+    AVFrame *frame = av_frame_alloc();
+    avcodec_send_packet(codec_ctx, pkt);
+    avcodec_receive_frame(codec_ctx, frame);
+
+	AVFrame *rgb_frame = av_frame_alloc();
+    int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, frame->width, frame->height, 1);
+    uint8_t *buffer = (uint8_t *)av_malloc(num_bytes);
+    av_image_fill_arrays(rgb_frame->data, rgb_frame->linesize, buffer, AV_PIX_FMT_RGB24, frame->width, frame->height, 1);
+
+    struct SwsContext *sws_ctx = sws_getContext(frame->width, frame->height, codec_ctx->pix_fmt,
+                                                frame->width, frame->height, AV_PIX_FMT_RGB24, 0, nullptr, nullptr, nullptr);
+    sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, rgb_frame->data, rgb_frame->linesize);
+
+    FILE *jpeg_file = fopen(save_path.c_str(), "wb");
+    if (!jpeg_file)
+        throw std::runtime_error("Error opening JPEG file for writing");
+
+    struct jpeg_compress_struct cinfo;
+    struct jpeg_error_mgr jerr;
+    cinfo.err = jpeg_std_error(&jerr);
+    jpeg_create_compress(&cinfo);
+    jpeg_stdio_dest(&cinfo, jpeg_file);
+
+    cinfo.image_width = frame->width;
+    cinfo.image_height = frame->height;
+    cinfo.input_components = 3;
+    cinfo.in_color_space = JCS_RGB;
+    jpeg_set_defaults(&cinfo);
+    jpeg_set_quality(&cinfo, 90, TRUE);
+
+    jpeg_start_compress(&cinfo, TRUE);
+
+    JSAMPROW row_pointer[1];
+
+    for (int y = 0; y < frame->height; y++) {
+        row_pointer[0] = &rgb_frame->data[0][y * rgb_frame->linesize[0]];
+        jpeg_write_scanlines(&cinfo, row_pointer, 1);
+    }
+
+    jpeg_finish_compress(&cinfo);
+    fclose(jpeg_file);
+
+    jpeg_destroy_compress(&cinfo);
+	
+    av_packet_free(&pkt);
+	av_frame_free(&rgb_frame); 
+    av_frame_free(&frame);
+    avcodec_free_context(&codec_ctx);
+	sws_freeContext(sws_ctx);
+	av_free(buffer);
 }
 
 int64_t SurvOutput::getSysTimestamp(int64_t timestamp_us)

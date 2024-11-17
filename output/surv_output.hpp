@@ -4,6 +4,8 @@ extern "C"
 {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
+#include <libavutil/imgutils.h>
+#include <libswscale/swscale.h>
 }
 
 #include "output.hpp"
@@ -21,11 +23,12 @@ protected:
     void timestampReady(int64_t timestamp) override;
 
 private:
-    void startNewPlaylist(int64_t timestamp_us);
+    void startNewPlaylist(void *mem, size_t size, int64_t timestamp_us, uint32_t flags);
     void finalizePlaylist();
     void startNewSegment();
     void finalizeSegment(int64_t timestamp_us);
     void writeSegmentData(void *mem, size_t size, int64_t timestamp_us, uint32_t flags);
+    void saveThumbnail(void *mem, size_t size, int64_t timestamp_us, const std::string& save_path);
     
     int64_t getSysTimestamp(int64_t timestamp);
 

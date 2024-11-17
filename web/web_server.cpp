@@ -4,6 +4,7 @@
 #include <mutex>
 #include <thread>
 
+#include "local_handler.hpp"
 #include "mongoose.h"
 #include "web_server.hpp"
 
@@ -24,32 +25,10 @@ struct Log
 	}
 };
 
-static std::string get_current_date()
-{
-	std::time_t t = std::time(nullptr);
-	std::tm tm = *std::localtime(&t);
-
-	char buffer[11];
-	std::strftime(buffer, sizeof(buffer), "%Y-%m-%d", &tm);
-
-	return std::string(buffer);
-}
-
-static std::string get_current_time()
-{
-	std::time_t t = std::time(nullptr);
-	std::tm tm = *std::localtime(&t);
-
-	char buffer[9];
-	std::strftime(buffer, sizeof(buffer), "%H:%M:%S", &tm);
-
-	return std::string(buffer);
-}
-
 static void log_fn(char c, void *param)
 {
 	struct Log *log = static_cast<Log *>(param);
-	std::string current_date = get_current_date();
+	std::string current_date = SurvOptions::ToTimeStr(std::time(nullptr), "%Y-%m-%d");
 
 	if (log->log_fname != current_date)
 	{
@@ -73,7 +52,7 @@ static void log_fn(char c, void *param)
 
 		if (log->new_line)
 		{
-			std::string current_time = get_current_time();
+			std::string current_time = SurvOptions::ToTimeStr(std::time(nullptr), "%H:%M:%S");
 			log->log_ofs << "[" << current_time << "] ";
 			log->new_line = false;
 		}
@@ -97,11 +76,15 @@ class MongooseServer : public WebServer
 public:
 	MongooseServer(SurvOptions const *options) : WebServer(options), event_loop_thread_(nullptr)
 	{
+		footage_dir_ = options->footage_directory;
 		page404_ = options->web_root_directory + "/404.html";
-		root_dir_ = options->web_root_directory + ",/footage=" + options->footage_directory;
+		root_dir_ = options->web_root_directory + "," + FOOTAGE_PREFIX + "=" + options->footage_directory;
 		http_server_options_ = {};
 		http_server_options_.page404 = page404_.c_str();
 		http_server_options_.root_dir = root_dir_.c_str();
+
+		date_format_ = options->footage_date_format;
+		time_format_ = options->playlist_time_format;
 
 		Log *log = new Log { options->web_log_directory };
 
@@ -149,6 +132,10 @@ public:
 private:
 	std::string page404_;
 	std::string root_dir_;
+	std::string footage_dir_;
+
+	std::string date_format_;
+	std::string time_format_;
 
 	struct mg_mgr mgr_;
 	std::thread *event_loop_thread_;
@@ -162,6 +149,34 @@ private:
 			count++;
 		}
 		return count;
+	}
+
+	template <typename Func, typename... Args>
+	static void handler_wrapper(Func &&fn, struct mg_connection *c, struct mg_http_message *hm, Args &&...args)
+	{
+		try
+		{
+			std::forward<Func>(fn)(c, hm, std::forward<Args>(args)...);
+		}
+		catch (const std::exception &e)
+		{
+			mg_http_reply(c, 500, "Content-Type: text/plain\r\n", "Internal Server Error: %s\n", e.what());
+		}
+	}
+
+	static void surv_footage_handler(struct mg_connection *c, struct mg_http_message *hm, std::string footage_dir, std::string date_format)
+	{
+		std::vector<day_surv_footage> footage = getDaySurvFootage(footage_dir);
+		mg_http_reply(c, 200, "Content-Type: application/json\r\n", toJSON(footage, date_format).c_str());
+	}
+
+	static void footage_playlist_handler(struct mg_connection *c, struct mg_http_message *hm, std::string footage_dir, std::string time_format)
+	{
+		long timestamp_long = mg_json_get_long(hm->body, "$.st", -1);
+		if (timestamp_long == -1)
+			throw std::invalid_argument("Invalid timestamp value");
+		std::vector<hour_playlist> playlist = getHourPlaylistByDate(footage_dir, static_cast<time_t>(timestamp_long));
+		mg_http_reply(c, 200, "Content-Type: application/json\r\n", toJSON(playlist, time_format).c_str());
 	}
 
 	static void eventHandler(struct mg_connection *c, int ev, void *ev_data)
@@ -181,9 +196,13 @@ private:
 		{
 			struct mg_http_message *hm = (struct mg_http_message *)ev_data;
 
-			if (mg_match(hm->uri, mg_str("/api/hello"), NULL))
+			if (mg_match(hm->uri, mg_str("/api/survfootage"), NULL))
 			{
-				mg_http_reply(c, 200, "Content-Type: application/json\r\n", "{%m:%d}\n", MG_ESC("status"), 1);
+				handler_wrapper(surv_footage_handler, c, hm, server->footage_dir_, server->date_format_);
+			}
+			else if (mg_match(hm->uri, mg_str("/api/playlist"), NULL))
+			{
+				handler_wrapper(footage_playlist_handler, c, hm, server->footage_dir_, server->time_format_);
 			}
 			else
 			{

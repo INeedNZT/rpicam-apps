@@ -1,6 +1,12 @@
 #pragma once
 
+#include <ctime>
+
 #include "video_options.hpp"
+
+#define THUMB_NAME "thumbnail.jpg"
+#define PLAYLIST_NAME "playlist.m3u8"
+#define FOOTAGE_PREFIX "/footage"
 
 struct SurvOptions : public VideoOptions
 {
@@ -22,11 +28,14 @@ struct SurvOptions : public VideoOptions
 			value<std::string>(&footage_directory)->default_value(std::string(home_directory) + "/footage"),
 			"Path to store playback of surveillance footage.")(
 			"web-host", value<std::string>(&web_host)->default_value("127.0.0.1"),
-			"Set the host address for the web server.")(
-			"web-port", value<int>(&web_port)->default_value(8000),
-			"Set the port for the web server.")(
+			"Set the host address for the web server.")("web-port", value<int>(&web_port)->default_value(8000),
+														"Set the port for the web server.")(
 			"max-connections", value<int>(&max_connections)->default_value(100),
-			"Set the maximum number of connections to the server.")
+			"Set the maximum number of connections to the server.")(
+			"footage-date-format", value<std::string>(&footage_date_format)->default_value("%Y-%m-%d"),
+			"Set the date format used in the footage file names.")(
+			"playlist-time-format", value<std::string>(&playlist_time_format)->default_value("%H:%M:%S"),
+			"Set the time format used in the playlist.")
 			;
 	}
 
@@ -38,6 +47,17 @@ struct SurvOptions : public VideoOptions
 	std::string web_host;
 	int web_port;
 	int max_connections;
+	std::string footage_date_format;
+	std::string playlist_time_format;
+
+	inline static std::string ToTimeStr(time_t time_seconds, std::string time_format)
+	{
+		std::tm tm = *std::localtime(&time_seconds);
+
+		char buffer[16];
+		strftime(buffer, sizeof(buffer), time_format.c_str(), &tm);
+		return std::string(buffer);
+	}
 
 	virtual bool Parse(int argc, char *argv[]) override
 	{
@@ -57,5 +77,7 @@ struct SurvOptions : public VideoOptions
 		std::cerr << "    web-host: " << web_host << std::endl;
 		std::cerr << "    web-port: " << web_port << std::endl;
 		std::cerr << "    max-connections: " << max_connections << std::endl;
+		std::cerr << "    footage-date-format: " << footage_date_format << std::endl;
+		std::cerr << "    playlist-time-format: " << playlist_time_format << std::endl;
 	}
 };

@@ -12,7 +12,7 @@ encoder_headers = files([
     'null_encoder.hpp',
 ])
 
-libav_dep_names = ['libavcodec', 'libavdevice', 'libavformat', 'libavutil', 'libswresample']
+libav_dep_names = ['libavcodec', 'libavdevice', 'libavformat', 'libavutil', 'libswresample', 'libswscale']
 libav_deps = []
 
 enable_libav = true

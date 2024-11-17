@@ -14,19 +14,17 @@
     <meta name="description" content="Raspberrypi Surveillance User Interface">
     <meta name="keyword" content="RpiCam,Bootstrap,Admin,Open,Source,CSS,HTML">
     <title>Raspberrypi Surveillance Admin</title>
-    <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-TileImage" content="assets/favicon/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
     <!-- Vendors styles-->
     <link rel="stylesheet" href="vendors/simplebar/css/simplebar.css">
-    <link rel="stylesheet" href="css/vendors/simplebar.css">
-    <link rel="apple-touch-icon" sizes="96x96" href="assets/favicon/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon/favicon-16x16.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon/favicon-32x32.png">
-    <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico">
-    <link rel="mainfest" href="assets/favicon/mainfest.json">
+    <link rel="stylesheet" href="/css/vendors/simplebar.css">
+    <link rel="apple-touch-icon" sizes="96x96" href="/assets/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon/favicon.ico">
+    <link rel="mainfest" href="/assets/favicon/mainfest.json">
     <!-- Main styles for this application-->
-    <link href="css/style.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
     <link rel="stylesheet" href="vendors/video.js/css/video-js.css">
     <link rel="stylesheet" href="vendors/videojs-playlist-ui/css/videojs-playlist-ui.css">
     <style>
@@ -42,6 +40,7 @@
         margin-left: 0 !important;
         margin-right: 0 !important;
         max-width: none !important;
+        position: relative !important;
       }
 
       .container-lg.px-4 {
@@ -134,11 +133,12 @@
       <div class="body flex-grow-1">
         <div class="container-lg px-4">
           <div style="height: 80%;">
-            <video class="video-js" id="my-video" controls="" preload="auto" autoplay="">
+            <video class="video-js" id="surv-video" controls="" preload="auto" autoplay="">
               <p class="vjs-no-js"></p>To view this video please enable JavaScript, and consider upgrading to a<a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
             </video>
           </div>
           <div class="vjs-playlist" style="height: 20%;"></div>
+          <div id="alert-container"></div>
         </div>
       </div>
       <footer class="footer px-4">
@@ -149,8 +149,8 @@
     <!-- CoreUI and necessary plugins-->
     <script src="vendors/@coreui/coreui/js/coreui.bundle.min.js"></script>
     <script src="vendors/simplebar/js/simplebar.min.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/color-modes.js"></script>
+    <script src="/js/config.js"></script>
+    <script src="/js/color-modes.js"></script>
     <script>
       const header = document.querySelector('header.header');
 
@@ -165,7 +165,7 @@
     <script src="vendors/videojs-playlist/js/videojs-playlist.js"></script>
     <script src="vendors/videojs-playlist-ui/js/videojs-playlist-ui.js"></script>
     <script src="vendors/lozad/js/lozad.min.js"></script>
-    <script src="js/playback.js"></script>
+    <script src="/js/hls.js"></script>
     <script>
     </script>
 

@@ -1,66 +1,47 @@
-const player = videojs('#my-video', {
-  playbackRates: [0.25, 0.5, 1, 2, 4]
-});
-player.fill(true);
-player.playlist([{
-  name: 'First Video',
-  thumbnail: 'http://media.w3.org/2010/05/sintel/poster.png',
-  sources: [{
-    src: 'http://media.w3.org/2010/05/sintel/trailer.mp4',
-    type: 'video/mp4'
-  }],
-  poster: 'http://media.w3.org/2010/05/sintel/poster.png'
-}, {
-  name: 'Second Video',
-  thumbnail: 'http://media.w3.org/2010/05/bunny/poster.png',
-  sources: [{
-    src: 'http://media.w3.org/2010/05/bunny/trailer.mp4',
-    type: 'video/mp4'
-  }],
-  poster: 'http://media.w3.org/2010/05/bunny/poster.png'
-}, {
-  name: 'Third Video',
-  thumbnail: 'http://vjs.zencdn.net/v/oceans.png',
-  sources: [{
-    src: 'http://vjs.zencdn.net/v/oceans.mp4',
-    type: 'video/mp4'
-  }],
-  poster: 'http://vjs.zencdn.net/v/oceans.png'
-}, {
-  name: 'Fourth Video',
-  thumbnail: 'http://media.w3.org/2010/05/bunny/poster.png',
-  sources: [{
-    src: 'http://media.w3.org/2010/05/bunny/movie.mp4',
-    type: 'video/mp4'
-  }],
-  poster: 'http://media.w3.org/2010/05/bunny/poster.png'
-}, {
-  name: 'Fifth Video',
-  thumbnail: 'http://media.w3.org/2010/05/video/poster.png',
-  sources: [{
-    src: 'http://media.w3.org/2010/05/video/movie_300.mp4',
-    type: 'video/mp4'
-  }],
-  poster: 'http://media.w3.org/2010/05/video/poster.png'
-}]);
+(() => {
+  const errorAlert = msg => {
+    const alertPlaceholder = document.getElementById('alert-container');
+    const appendAlert = (message, type) => {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = [`<div class="alert alert-${type} alert-dismissible fade" role="alert">`, `   <div>${message}</div>`, '</div>'].join('');
+      const al = new coreui.Alert(wrapper);
+      alertPlaceholder.append(wrapper);
+      setTimeout(() => {
+        wrapper.firstElementChild.classList.add('show');
+      }, 50);
+      setTimeout(() => {
+        al.close();
+      }, 5000);
+    };
+    appendAlert(msg, 'danger');
+  };
+  window.addEventListener('load', () => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', '/api/survfootage', true);
+    xhr.onload = function () {
+      if (xhr.status === 200) {
+        const data = JSON.parse(xhr.responseText);
+        const cardTemplate = document.querySelector('.surv-card');
+        const container = document.getElementById('surv-card-container');
+        const loadingPlaceholder = document.getElementById('loading-placeholder');
+        for (const item of data) {
+          const newCard = cardTemplate.cloneNode(true);
+          newCard.querySelector('.card-title').textContent = item.date_str;
+          newCard.querySelector('.card-img-top').setAttribute('src', item.thumb_path);
+          newCard.querySelector('a').href = `hls.html?st=${item.date}`;
+          newCard.style.display = 'block';
+          container.append(newCard);
+        }
+        loadingPlaceholder.style.display = 'none';
+      } else {
+        errorAlert(`Request failed with status ${xhr.status}`);
+      }
+    };
 
-// Play through the playlist automatically.
-player.playlist.autoadvance(0);
-player.playlistUi({
-  horizontal: true
-});
-player.ready(() => {
-  const images = document.querySelectorAll('.vjs-playlist-thumbnail img');
-  images.forEach(function (img) {
-    img.addEventListener('dragstart', function (event) {
-      event.preventDefault();
-    });
-    img.setAttribute('data-src', img.getAttribute('src'));
-    img.setAttribute('src', '/assets/img/placeholder-video.png');
-    img.classList.add('lozad');
-    img.removeAttribute('loading');
-    const observer = lozad();
-    observer.observe();
+    // Smooth the animation
+    setTimeout(() => {
+      xhr.send();
+    }, 500);
   });
-});
+})();
 //# sourceMappingURL=playback.js.map

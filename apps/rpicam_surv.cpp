@@ -37,6 +37,12 @@ public:
 		}
 	}
 
+	void SendFrameData(void *mem, size_t size, int64_t timestamp_us, bool keyframe)
+	{
+		if (web_server_)
+			web_server_->RecvFrameData(mem, size);
+	}
+
 private:
 	std::unique_ptr<WebServer> web_server_;
 };
@@ -89,7 +95,15 @@ static void event_loop(RPiCamSurvApp &app)
 {
 	SurvOptions const *options = app.GetOptions();
 	std::unique_ptr<Output> output = std::unique_ptr<Output>(SurvOutput::Create(options));
-	app.SetEncodeOutputReadyCallback(std::bind(&Output::OutputReady, output.get(), _1, _2, _3, _4));
+
+	auto encode_output_ready_callback = std::bind(
+		[&app, &output](auto &&...args)
+		{
+			app.SendFrameData(std::forward<decltype(args)>(args)...);
+			// output.get()->OutputReady(std::forward<decltype(args)>(args)...);
+		},
+		_1, _2, _3, _4);
+	app.SetEncodeOutputReadyCallback(encode_output_ready_callback);
 	app.SetMetadataReadyCallback(std::bind(&Output::MetadataReady, output.get(), _1));
 
 	// Start web server and surveillance recorder thread first

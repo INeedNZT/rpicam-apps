@@ -15,6 +15,10 @@
     };
     appendAlert(msg, 'danger');
   };
+  const player = videojs('#surv-video', {
+    playbackRates: [0.25, 0.5, 1, 2, 4]
+  });
+  player.fill(true);
   const query = window.location.search.slice(1);
   const [key, value] = query.split('=');
   const requestBody = {};
@@ -48,10 +52,6 @@
     errorAlert(`Error Status: ${e.target.status}`);
   };
   xhr.send(JSON.stringify(requestBody));
-  const player = videojs('#surv-video', {
-    playbackRates: [0.25, 0.5, 1, 2, 4]
-  });
-  player.fill(true);
   player.playlist(playlist);
 
   // Play through the playlist automatically.

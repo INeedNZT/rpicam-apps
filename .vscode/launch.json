@@ -1,7 +1,6 @@
 {
     "version": "0.2.0",
     "configurations": [
-        
         {
             "name": "debug",
             "type": "cppdbg",
@@ -11,6 +10,7 @@
                 "-t", "0",
                 "-r", "--inline",
                 "--web-host", "0.0.0.0",
+                "--profile", "baseline",
                 "--post-process-file", "assets/surveillance.json"
             ],
             "cwd": "${workspaceFolder}",

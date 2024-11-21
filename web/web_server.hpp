@@ -8,7 +8,8 @@ class WebServer
 {
 public:
 	WebServer(SurvOptions const *options)
-		: host_(options->web_host), port_(options->web_port), max_connections_(options->max_connections), running_(false)
+		: host_(options->web_host), port_(options->web_port), max_connections_(options->max_connections),
+		  running_(false)
 	{
 	}
 
@@ -16,6 +17,7 @@ public:
 
 	virtual void Start() = 0;
 	virtual void Stop() = 0;
+	virtual void RecvFrameData(void *mem, size_t size) = 0;
 
 	static std::unique_ptr<WebServer> Create(SurvOptions const *options);
 

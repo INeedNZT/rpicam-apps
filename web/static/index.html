@@ -151,42 +151,7 @@
       });
     </script>
     <script src="vendors/@coreui/utils/js/index.js"></script>
-    <script>
-      let canvas = document.createElement("canvas");
-      document.body.getElementsByClassName("canvas-container")[0].appendChild(canvas);
-
-      // Create h264 player
-      let uri = "ws://" + document.location.host + "/rpicam";
-      const ww = new Worker('http-live-player-worker.js');
-      const ofc = canvas.transferControlToOffscreen()
-      ww.postMessage({
-        cmd: 'init',
-        canvas: ofc
-      }, [ofc]);
-      ww.postMessage({
-        cmd: 'connect',
-        url: uri
-      });
-
-      //expose instance for button callbacks
-      window.wsavc = {
-        playStream() {
-          ww.postMessage({
-            cmd: 'play'
-          })
-        },
-        stopStream() {
-          ww.postMessage({
-            cmd: 'stop'
-          })
-        },
-        disconnect() {
-          ww.postMessage({
-            cmd: 'disconnect'
-          })
-        }
-      };
-    </script>
+    <script src="/js/index.js"></script>
     <script>
     </script>
 

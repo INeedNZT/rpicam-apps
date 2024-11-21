@@ -1,5 +1,5 @@
 const canvas = document.createElement('canvas');
-document.body.getElementsByClassName('canvas-container')[0].appendChild(canvas);
+document.body.getElementsByClassName('canvas-container')[0].append(canvas);
 
 // Create h264 player
 const uri = `ws://${document.location.host}/live`;
@@ -13,26 +13,15 @@ ww.postMessage({
   cmd: 'connect',
   url: uri
 });
-ww.postMessage({
-  cmd: 'play'
-});
-
-// Expose instance for button callbacks
-// window.wsavc = {
-//   playStream() {
-//     ww.postMessage({
-//       cmd: 'play'
-//     })
-//   },
-//   stopStream() {
-//     ww.postMessage({
-//       cmd: 'stop'
-//     })
-//   },
-//   disconnect() {
-//     ww.postMessage({
-//       cmd: 'disconnect'
-//     })
-//   }
-// }
+ww.onmessage = e => {
+  const msg = e.data;
+  switch (msg.cmd) {
+    case 'canvasReady':
+      canvas.style.width = `${msg.width}px`;
+      canvas.style.height = `${msg.height}px`;
+      ww.postMessage({
+        cmd: 'play'
+      });
+  }
+};
 //# sourceMappingURL=index.js.map

@@ -24537,6 +24537,13 @@
           case 'init':
             player.offscreenCanvas = msg.canvas;
             player.player = new WSAvcPlayer(player.offscreenCanvas, 'webgl');
+            player.player.on('canvasReady', (w, h) => {
+              postMessage({
+                cmd: 'canvasReady',
+                width: w,
+                height: h
+              });
+            });
             break;
           case 'play':
             player.player.playStream();

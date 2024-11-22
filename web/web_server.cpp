@@ -304,7 +304,7 @@ private:
 				}
 				MG_INFO(("User added to broadcast list"));
 			}
-			else if (std::string(wm->data.buf) == "STOPSTREAM ")
+			else if (std::string(wm->data.buf) == "STOPSTREAM")
 			{
 				{
 					std::lock_guard<std::mutex> lock(server->ws_connections_mutex_);

@@ -2,7 +2,8 @@ const canvas = document.createElement('canvas');
 document.body.getElementsByClassName('canvas-container')[0].append(canvas);
 
 // Create h264 player
-const uri = `ws://${document.location.host}/live`;
+// const uri = `ws://${document.location.host}/live`
+const uri = 'ws://192.168.110.229:8000/live';
 const ww = new Worker('/js/http-live-player-worker.js');
 const ofc = canvas.transferControlToOffscreen();
 ww.postMessage({
@@ -19,8 +20,18 @@ ww.onmessage = e => {
     case 'canvasReady':
       canvas.style.width = `${msg.width}px`;
       canvas.style.height = `${msg.height}px`;
+      canvas.dataset.play = 'true';
       ww.postMessage({
         cmd: 'play'
+      });
+      canvas.addEventListener('click', e => {
+        const c = e.currentTarget;
+        const isplay = c.dataset.play === 'true';
+        c.dataset.play = isplay ? 'false' : 'true';
+        const cmd = isplay ? 'stop' : 'play';
+        ww.postMessage({
+          cmd: cmd
+        });
       });
   }
 };

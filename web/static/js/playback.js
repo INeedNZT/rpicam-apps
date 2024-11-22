@@ -21,10 +21,11 @@
     xhr.onload = function () {
       if (xhr.status === 200) {
         const data = JSON.parse(xhr.responseText);
+        const sorted_data = data.sort((a, b) => Number(b.date) - Number(a.date));
         const cardTemplate = document.querySelector('.surv-card');
         const container = document.getElementById('surv-card-container');
         const loadingPlaceholder = document.getElementById('loading-placeholder');
-        for (const item of data) {
+        for (const item of sorted_data) {
           const newCard = cardTemplate.cloneNode(true);
           newCard.querySelector('.card-title').textContent = item.date_str;
           newCard.querySelector('.card-img-top').setAttribute('src', item.thumb_path);

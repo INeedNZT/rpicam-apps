@@ -100,7 +100,7 @@ static void event_loop(RPiCamSurvApp &app)
 		[&app, &output](auto &&...args)
 		{
 			app.SendFrameData(std::forward<decltype(args)>(args)...);
-			// output.get()->OutputReady(std::forward<decltype(args)>(args)...);
+			output.get()->OutputReady(std::forward<decltype(args)>(args)...);
 		},
 		_1, _2, _3, _4);
 	app.SetEncodeOutputReadyCallback(encode_output_ready_callback);

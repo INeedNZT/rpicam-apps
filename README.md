@@ -1,7 +1,6 @@
 # surveillance
 
 ```shell
-sudo apt-get install libdlib-dev
 sudo apt-get install libopencv-dnn-dev
 ```
 

@@ -69,9 +69,12 @@ if opencv_dep.found()
 endif
 
 # TFlite based postprocessing stages.
-enable_tflite = false
-tflite_dep = dependency('tensorflow-lite', required : get_option('enable_tflite'))
-if tflite_dep.found()
+enable_tflite = get_option('enable_tflite')
+if enable_tflite.enabled()
+    tflite_dep = declare_dependency(
+        include_directories : include_directories('/usr/local/include/tensorflow'),
+        link_args : ['-L/usr/local/lib', '-ltensorflowlite_c']
+    )
     tflite_postproc_src = files([
         'tf_stage.cpp',
         'object_classify_tf_stage.cpp',

@@ -68,15 +68,17 @@ if opencv_dep.found()
     enable_opencv = true
 endif
 
+enable_tflite = false
 # TFlite based postprocessing stages.
-enable_tflite = get_option('enable_tflite')
-if enable_tflite.enabled()
+tflite_enable = get_option('enable_tflite')
+if tflite_enable.enabled()
     tflite_dep = declare_dependency(
-        include_directories : include_directories('/usr/local/include/tensorflow'),
-        link_args : ['-L/usr/local/lib', '-ltensorflowlite_c']
+        include_directories : include_directories('/usr/local/include/tensorflow/lite'),
+        link_args : ['-L/usr/local/lib', '-ltensorflow-lite']
     )
     tflite_postproc_src = files([
         'tf_stage.cpp',
+        'face_detect_tf_stage.cpp',
         'object_classify_tf_stage.cpp',
         'object_detect_tf_stage.cpp',
         'pose_estimation_tf_stage.cpp',
@@ -85,6 +87,7 @@ if enable_tflite.enabled()
 
     # TFlite assets
     postproc_assets += files([
+        assets_dir / 'face_detect_tf.json',
         assets_dir / 'object_classify_tf.json',
         assets_dir / 'object_detect_tf.json',
         assets_dir / 'pose_estimation_tf.json',

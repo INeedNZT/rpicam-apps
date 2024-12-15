@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <filesystem>
 #include <jpeglib.h>
 
 #include "sentinel_service.hpp"
@@ -52,9 +53,11 @@ void SentinelService::run()
 	}
 }
 
-static void drawRectangle(uint8_t *yuv420_buffer, const std::vector<float> &box, int width, int height, uint8_t red,
-						  uint8_t green, uint8_t blue, int thickness)
+static void drawRectangle(uint8_t *yuv420_buffer, const std::vector<float> &box, int width, int height, float score,
+						  int thickness)
 {
+	uint8_t v = 240 - (240 - 64) * (1 - score) / (1 - 0.6f); // expand the weight based on confidence score
+
 	int x1 = static_cast<int>(box[0] * width);
 	int y1 = static_cast<int>(box[1] * height);
 	int x2 = static_cast<int>(box[2] * width);
@@ -77,10 +80,10 @@ static void drawRectangle(uint8_t *yuv420_buffer, const std::vector<float> &box,
 				int u_index = ((y1 - t) / 2) * (width / 2) + (x / 2);
 				int v_index = u_index;
 
-				yuv420_buffer[y_index] = 76 * red + 150 * green + 29 * blue; // Y分量的计算公式
+				yuv420_buffer[y_index] = 128;
 
-				u_data[u_index] = -43 * red - 85 * green + 128 * blue;
-				v_data[v_index] = 128 * red - 107 * green - 21 * blue;
+				u_data[u_index] = 128;
+				v_data[v_index] = v;
 			}
 		}
 
@@ -93,10 +96,10 @@ static void drawRectangle(uint8_t *yuv420_buffer, const std::vector<float> &box,
 				int u_index = ((y2 + t) / 2) * (width / 2) + (x / 2);
 				int v_index = u_index;
 
-				yuv420_buffer[y_index] = 76 * red + 150 * green + 29 * blue;
+				yuv420_buffer[y_index] = 128;
 
-				u_data[u_index] = -43 * red - 85 * green + 128 * blue;
-				v_data[v_index] = 128 * red - 107 * green - 21 * blue;
+				u_data[u_index] = 128;
+				v_data[v_index] = v;
 			}
 		}
 
@@ -109,10 +112,10 @@ static void drawRectangle(uint8_t *yuv420_buffer, const std::vector<float> &box,
 				int u_index = (y / 2) * (width / 2) + ((x1 - t) / 2);
 				int v_index = u_index;
 
-				yuv420_buffer[y_index] = 76 * red + 150 * green + 29 * blue;
+				yuv420_buffer[y_index] = 128;
 
-				u_data[u_index] = -43 * red - 85 * green + 128 * blue;
-				v_data[v_index] = 128 * red - 107 * green - 21 * blue;
+				u_data[u_index] = 128;
+				v_data[v_index] = v;
 			}
 		}
 
@@ -124,10 +127,10 @@ static void drawRectangle(uint8_t *yuv420_buffer, const std::vector<float> &box,
 				int u_index = (y / 2) * (width / 2) + ((x2 + t) / 2);
 				int v_index = u_index;
 
-				yuv420_buffer[y_index] = 76 * red + 150 * green + 29 * blue;
+				yuv420_buffer[y_index] = 128;
 
-				u_data[u_index] = -43 * red - 85 * green + 128 * blue;
-				v_data[v_index] = 128 * red - 107 * green - 21 * blue;
+				u_data[u_index] = 128;
+				v_data[v_index] = v;
 			}
 		}
 	}
@@ -198,9 +201,9 @@ void SentinelService::saveSnapshot(CompletedRequestPtr &completed_request, Strea
 	auto ts = completed_request->metadata.get(controls::SensorTimestamp);
 	int64_t timestamp_us = ts ? *ts : buffer->metadata().timestamp / 1000;
 
-	if(time_offset_ == 0)
+	if (time_offset_ == 0)
 		time_offset_ = timestamp_us;
-	
+
 	int64_t sys_timestamp = SurvOptions::GetSysTimestamp(timestamp_us - time_offset_);
 	time_t sys_time_sec = static_cast<time_t>(sys_timestamp / 1000000);
 
@@ -210,23 +213,19 @@ void SentinelService::saveSnapshot(CompletedRequestPtr &completed_request, Strea
 
 	for (size_t i = 0; i < detected_boxes.size(); ++i)
 	{
-		int color_score = static_cast<int>(scores[i] * 255);
-
-		uint8_t r = color_score;
-		uint8_t g = 255 - color_score;
-		uint8_t b = 0;
-		drawRectangle(frame_copy_.data(), detected_boxes[i], lores_info.width, lores_info.height, r, g, b, 2);
+		drawRectangle(frame_copy_.data(), detected_boxes[i], lores_info.width, lores_info.height, scores[i], 2);
 	}
 
 	FILE *fp = nullptr;
 	uint8_t *jpeg_buffer = nullptr;
 	unsigned long jpeg_len = 0;
-	std::string filename = std::to_string(sys_time_sec) + ".jpg";
+	std::string filename = event_dir_ + "/" + std::to_string(sys_time_sec) + ".jpg";
 
 	try
 	{
-		YUV420_to_JPEG((uint8_t *)(frame_copy_.data()), lores_info, 90, 0, jpeg_buffer, jpeg_len);
+		std::filesystem::create_directories(event_dir_);
 		fp = fopen(filename.c_str(), "wb");
+		YUV420_to_JPEG((uint8_t *)(frame_copy_.data()), lores_info, 90, 0, jpeg_buffer, jpeg_len);
 		fwrite(jpeg_buffer, jpeg_len, 1, fp);
 		fclose(fp);
 		fp = nullptr;

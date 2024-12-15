@@ -62,13 +62,19 @@ public:
 		}
 	}
 
-	void InvokeSentinel(CompletedRequestPtr &completed_request, Stream *stream,
-						const std::vector<std::vector<float>> &detected_boxes, const std::vector<float> &scores)
+	void InvokeSentinel(CompletedRequestPtr &completed_request, Stream *stream)
 	{
-		if (detected_boxes.empty() || scores.empty())
+		std::vector<std::vector<float>> detected_boxes;
+		std::vector<float> detected_scores;
+		int refresh_rate;
+		completed_request->post_process_metadata.Get("face_detect.boxes", detected_boxes);
+		completed_request->post_process_metadata.Get("face_detect.scores", detected_scores);
+		completed_request->post_process_metadata.Get("face_detect.refresh_rate", refresh_rate);
+
+		if (completed_request->sequence % refresh_rate != 0 || detected_boxes.empty() || detected_scores.empty())
 			return;
 
-		EventItem item(completed_request, stream, detected_boxes, scores);
+		EventItem item(completed_request, stream, detected_boxes, detected_scores);
 		sentinel_service_->RecordEvent(std::move(item));
 	}
 
@@ -194,12 +200,8 @@ static void event_loop(RPiCamSurvApp &app)
 		}
 
 		CompletedRequestPtr &completed_request = std::get<CompletedRequestPtr>(msg.payload);
-		std::vector<std::vector<float>> detected_boxes;
-		std::vector<float> detected_scores;
-		completed_request->post_process_metadata.Get("face_detect.boxes", detected_boxes);
-		completed_request->post_process_metadata.Get("face_detect.scores", detected_scores);
 
-		app.InvokeSentinel(completed_request, app.LoresStream(), detected_boxes, detected_scores);
+		app.InvokeSentinel(completed_request, app.LoresStream());
 		app.EncodeBuffer(completed_request, app.VideoStream());
 		app.ShowPreview(completed_request, app.VideoStream());
 	}

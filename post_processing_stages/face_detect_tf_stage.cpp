@@ -183,6 +183,9 @@ void FaceDetectTfStage::interpretOutputs()
 	std::vector<int> final_indices;
 	applyNMS(valid_boxes, valid_scores, final_indices);
 
+	detected_boxes_.clear();
+	detected_scores_.clear();
+
 	for (int idx : final_indices)
 	{
 		detected_boxes_.push_back(valid_boxes[idx]);
@@ -194,6 +197,7 @@ void FaceDetectTfStage::applyResults(CompletedRequestPtr &completed_request)
 {
 	completed_request->post_process_metadata.Set("face_detect.boxes", detected_boxes_);
 	completed_request->post_process_metadata.Set("face_detect.scores", detected_scores_);
+	completed_request->post_process_metadata.Set("face_detect.refresh_rate", config_->refresh_rate);
 }
 
 static PostProcessingStage *Create(RPiCamApp *app)

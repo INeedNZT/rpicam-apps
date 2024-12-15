@@ -35,8 +35,12 @@ struct SurvOptions : public VideoOptions
 			"footage-date-format", value<std::string>(&footage_date_format)->default_value("%Y-%m-%d"),
 			"Set the date format used in the footage file names.")(
 			"playlist-time-format", value<std::string>(&playlist_time_format)->default_value("%H:%M:%S"),
-			"Set the time format used in the playlist.")
-			;
+			"Set the time format used in the playlist.")(
+			"event-directory",
+			value<std::string>(&event_directory)->default_value(std::string(home_directory) + "/events"),
+			"Path to store the security event logs and snapshots.")(
+			"event-interval", value<unsigned int>(&event_interval)->default_value(15),
+			"Set the time interval in seconds between events before the next event check.");
 	}
 
 	bool record;
@@ -50,13 +54,23 @@ struct SurvOptions : public VideoOptions
 	std::string footage_date_format;
 	std::string playlist_time_format;
 
-	inline static std::string ToTimeStr(time_t time_seconds, std::string time_format)
+	std::string event_directory;
+	unsigned int event_interval;
+
+	static int64_t sys_start_timestamp;
+
+	static inline std::string ToTimeStr(time_t time_seconds, std::string time_format)
 	{
 		std::tm tm = *std::localtime(&time_seconds);
 
 		char buffer[16];
 		strftime(buffer, sizeof(buffer), time_format.c_str(), &tm);
 		return std::string(buffer);
+	}
+
+	static inline int64_t GetSysTimestamp(int64_t timestamp_us)
+	{
+		return sys_start_timestamp + timestamp_us;
 	}
 
 	virtual bool Parse(int argc, char *argv[]) override
@@ -79,5 +93,7 @@ struct SurvOptions : public VideoOptions
 		std::cerr << "    max-connections: " << max_connections << std::endl;
 		std::cerr << "    footage-date-format: " << footage_date_format << std::endl;
 		std::cerr << "    playlist-time-format: " << playlist_time_format << std::endl;
+		std::cerr << "    event-directory: " << event_directory << std::endl;
+		std::cerr << "    event-interval: " << event_interval << std::endl;
 	}
 };

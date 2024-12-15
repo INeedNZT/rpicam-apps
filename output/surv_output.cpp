@@ -42,8 +42,7 @@ static std::string getDatePath(const std::string &footage_directory, time_t time
 
 SurvOutput::SurvOutput(SurvOptions const *options)
 	: Output(options), footage_directory_(options->footage_directory), segment_index_(0), segment_start_time_(0),
-	  segment_duration_(options->segment_duration), playlist_start_time_(0), playlist_interval_duration_(60 * 60),
-	  sys_start_timestamp_(0)
+	  segment_duration_(options->segment_duration), playlist_start_time_(0), playlist_interval_duration_(60 * 60)
 {
 	std::filesystem::create_directories(footage_directory_);
 
@@ -72,7 +71,7 @@ SurvOutput::~SurvOutput()
 
 void SurvOutput::outputBuffer(void *mem, size_t size, int64_t timestamp_us, uint32_t flags)
 {
-	int64_t sys_timestamp = getSysTimestamp(timestamp_us);
+	int64_t sys_timestamp = SurvOptions::GetSysTimestamp(timestamp_us);
 
 	if (flags & FLAG_KEYFRAME)
 	{
@@ -111,7 +110,7 @@ void SurvOutput::timestampReady(int64_t timestamp)
 void SurvOutput::startNewPlaylist(void *mem, size_t size, int64_t timestamp_us)
 {
 	playlist_start_time_ = timestamp_us;
-	int64_t sys_timestamp = getSysTimestamp(playlist_start_time_);
+	int64_t sys_timestamp = SurvOptions::GetSysTimestamp(playlist_start_time_);
 	time_t sys_time_sec = static_cast<time_t>(sys_timestamp / 1000000);
 	std::string date_directory = getDatePath(footage_directory_, sys_time_sec);
 	std::filesystem::create_directories(date_directory);
@@ -265,18 +264,6 @@ void SurvOutput::saveThumbnail(void *mem, size_t size, int64_t timestamp_us, con
 	avcodec_free_context(&codec_ctx);
 	sws_freeContext(sws_ctx);
 	av_free(buffer);
-}
-
-int64_t SurvOutput::getSysTimestamp(int64_t timestamp_us)
-{
-	if (sys_start_timestamp_ == 0)
-	{
-		sys_start_timestamp_ =
-			std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-				.count();
-	}
-
-	return sys_start_timestamp_ + timestamp_us;
 }
 
 Output *SurvOutput::Create(SurvOptions const *options)

@@ -8,6 +8,7 @@
 #include "output/surv_output.hpp"
 
 #include "core/surv_options.hpp"
+#include "sentinel/sentinel_service.hpp"
 #include "web/web_server.hpp"
 
 using namespace std::placeholders;
@@ -17,7 +18,7 @@ using namespace std::placeholders;
 class RPiCamSurvApp : public RPiCamEncoder<SurvOptions>
 {
 public:
-	RPiCamSurvApp() : RPiCamEncoder<SurvOptions>(), web_server_(nullptr) {}
+	RPiCamSurvApp() : RPiCamEncoder<SurvOptions>(), web_server_(nullptr), sentinel_service_(nullptr) {}
 
 	void StartWebServer()
 	{
@@ -43,8 +44,37 @@ public:
 			web_server_->RecvFrameData(mem, size);
 	}
 
+	void StartSentinel()
+	{
+		if (!sentinel_service_)
+		{
+			sentinel_service_ = SentinelService::Create(this);
+			sentinel_service_->Start();
+		}
+	}
+
+	void StopSentinel()
+	{
+		if (sentinel_service_)
+		{
+			sentinel_service_->Stop();
+			sentinel_service_.reset();
+		}
+	}
+
+	void InvokeSentinel(CompletedRequestPtr &completed_request, Stream *stream,
+						const std::vector<std::vector<float>> &detected_boxes, const std::vector<float> &scores)
+	{
+		if (detected_boxes.empty() || scores.empty())
+			return;
+
+		EventItem item(completed_request, stream, detected_boxes, scores);
+		sentinel_service_->RecordEvent(std::move(item));
+	}
+
 private:
 	std::unique_ptr<WebServer> web_server_;
+	std::unique_ptr<SentinelService> sentinel_service_;
 };
 
 static int signal_received;
@@ -106,13 +136,19 @@ static void event_loop(RPiCamSurvApp &app)
 	app.SetEncodeOutputReadyCallback(encode_output_ready_callback);
 	app.SetMetadataReadyCallback(std::bind(&Output::MetadataReady, output.get(), _1));
 
-	// Start web server and surveillance recorder thread first
+	// Start web server and surveillance recorder thread
 	app.StartWebServer();
+	// Start event logger and risk alert thread
+	app.StartSentinel();
 
 	app.OpenCamera();
 	app.ConfigureVideo(get_colourspace_flags(options->codec));
 	app.StartEncoder();
 	app.StartCamera();
+
+	SurvOptions::sys_start_timestamp =
+		std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+			.count();
 	auto start_time = std::chrono::high_resolution_clock::now();
 
 	// Monitoring for keypresses and signals.
@@ -158,6 +194,12 @@ static void event_loop(RPiCamSurvApp &app)
 		}
 
 		CompletedRequestPtr &completed_request = std::get<CompletedRequestPtr>(msg.payload);
+		std::vector<std::vector<float>> detected_boxes;
+		std::vector<float> detected_scores;
+		completed_request->post_process_metadata.Get("face_detect.boxes", detected_boxes);
+		completed_request->post_process_metadata.Get("face_detect.scores", detected_scores);
+
+		app.InvokeSentinel(completed_request, app.LoresStream(), detected_boxes, detected_scores);
 		app.EncodeBuffer(completed_request, app.VideoStream());
 		app.ShowPreview(completed_request, app.VideoStream());
 	}

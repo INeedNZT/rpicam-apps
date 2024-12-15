@@ -30,8 +30,6 @@ private:
     void writeSegmentData(void *mem, size_t size, int64_t timestamp_us, uint32_t flags);
     void saveThumbnail(void *mem, size_t size, int64_t timestamp_us, const std::string& save_path);
     
-    int64_t getSysTimestamp(int64_t timestamp);
-
     std::string footage_directory_;
     std::string playlist_directory_;
     std::ofstream playlist_file_;
@@ -41,7 +39,6 @@ private:
     const unsigned int segment_duration_;
     int64_t playlist_start_time_;
     const int64_t playlist_interval_duration_;
-    int64_t sys_start_timestamp_;
     AVFormatContext *format_ctx_;
     AVStream *video_stream_;
 };

@@ -52,6 +52,7 @@ subdir('output')
 subdir('preview')
 subdir('utils')
 subdir('web')
+subdir('sentinel')
 
 add_project_arguments(cpp_arguments, language : 'cpp')
 

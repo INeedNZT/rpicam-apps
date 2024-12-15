@@ -1,0 +1,15 @@
+{
+    "rpicam-apps":
+    {
+        "lores":
+        {
+            "width": 320,
+            "height": 240
+        }
+    },
+    "face_detect_tf":
+    {
+        "refresh_rate": 30,
+        "model_file" : "version-RFB-320_without_postprocessing.tflite"
+    }
+}

@@ -197,7 +197,6 @@ void FaceDetectTfStage::applyResults(CompletedRequestPtr &completed_request)
 {
 	completed_request->post_process_metadata.Set("face_detect.boxes", detected_boxes_);
 	completed_request->post_process_metadata.Set("face_detect.scores", detected_scores_);
-	completed_request->post_process_metadata.Set("face_detect.refresh_rate", config_->refresh_rate);
 }
 
 static PostProcessingStage *Create(RPiCamApp *app)

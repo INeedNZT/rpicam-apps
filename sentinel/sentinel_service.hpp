@@ -51,8 +51,9 @@ class SentinelService
 {
 public:
 	SentinelService(RPiCamEncoder<SurvOptions> *app)
-		: running_(false), event_dir_(app->GetOptions()->event_directory),
-		  event_interval_sec_(app->GetOptions()->event_interval), time_offset_(0), app_(app)
+		: running_(false), snapshot_save_rate_(app->GetOptions()->save_rate),
+		  event_dir_(app->GetOptions()->event_directory), event_interval_sec_(app->GetOptions()->event_interval),
+		  time_offset_(0), app_(app)
 	{
 	}
 
@@ -67,6 +68,8 @@ public:
 
 private:
 	bool running_;
+
+	unsigned int snapshot_save_rate_;
 
 	std::string event_dir_;
 	unsigned int event_interval_sec_;

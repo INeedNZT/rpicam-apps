@@ -49,7 +49,8 @@ void SentinelService::run()
 		EventItem item = std::move(event_item_queue_.front());
 		event_item_queue_.pop();
 		// logEvent();
-		saveSnapshot(item.completed_request, item.stream, item.detected_boxes, item.scores);
+		if (item.completed_request->sequence % snapshot_save_rate_ == 0)
+			saveSnapshot(item.completed_request, item.stream, item.detected_boxes, item.scores);
 	}
 }
 

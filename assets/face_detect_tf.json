@@ -10,6 +10,10 @@
     "face_detect_tf":
     {
         "refresh_rate": 1,
-        "model_file" : "version-RFB-320_without_postprocessing.tflite"
+        "confidence_threshold": 0.6,
+        "nms_iou_threshold": 0.3,
+        "center_variance": 0.1,
+        "size_variance": 0.2,
+        "model_file" : "/home/pi/models/version-RFB-320_without_postprocessing.tflite"
     }
 }

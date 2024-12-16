@@ -11,7 +11,7 @@ struct FaceDetectTfConfig : public TfConfig
 	float conf_threshold;
 	float nms_iou_threshold;
 	float center_variance;
-    float size_variance; 
+    float size_variance;
 };
 
 #define NAME "face_detect_tf"
@@ -69,6 +69,14 @@ void FaceDetectTfStage::readExtras(boost::property_tree::ptree const &params)
 	config()->nms_iou_threshold = params.get<float>("nms_iou_threshold", 0.3f);
 	config()->center_variance = params.get<float>("center_variance", 0.1f);
 	config()->size_variance = params.get<float>("size_variance", 0.2f);
+
+	if (config()->verbose)
+	{
+		LOG(1, "Confidence Threshold: " << config()->conf_threshold
+										<< ", NMS IoU Threshold: " << config()->nms_iou_threshold
+										<< ", Center Variance: " << config()->center_variance
+										<< ", Size Variance: " << config()->size_variance);
+	}
 
 	generateAnchors();
 }
@@ -190,6 +198,17 @@ void FaceDetectTfStage::interpretOutputs()
 	{
 		detected_boxes_.push_back(valid_boxes[idx]);
 		detected_scores_.push_back(valid_scores[idx]);
+	}
+
+	if (config()->verbose && final_indices.size())
+	{
+		LOG(1, "Face detection results:");
+		for (size_t i = 0; i < detected_boxes_.size(); ++i)
+		{
+			LOG(1, "Box " << i << ": [" << detected_boxes_[i][0] << ", " << detected_boxes_[i][1] << ", "
+						  << detected_boxes_[i][2] << ", " << detected_boxes_[i][3]
+						  << "], Score: " << detected_scores_[i]);
+		}
 	}
 }
 

@@ -11,7 +11,7 @@ struct FaceDetectTfConfig : public TfConfig
 	float conf_threshold;
 	float nms_iou_threshold;
 	float center_variance;
-    float size_variance;
+	float size_variance;
 };
 
 #define NAME "face_detect_tf"
@@ -83,8 +83,8 @@ void FaceDetectTfStage::readExtras(boost::property_tree::ptree const &params)
 
 void FaceDetectTfStage::checkConfiguration()
 {
-	if (config()->conf_threshold <= 0.0 || config()->conf_threshold > 1.0)
-		throw std::runtime_error("FaceDetectTfStage: Invalid confidence threshold");
+	if (!lores_stream_)
+		throw std::runtime_error("FaceDetectTfStage: Low resolution stream is required");
 }
 
 void FaceDetectTfStage::generateAnchors()

@@ -11,7 +11,7 @@
     {
         "difference_m" : 0.1,
         "difference_c" : 10,
-        "region_threshold" : 0.001,
+        "region_threshold" : 0.002,
         "hskip" : 2,
         "vskip" : 2,
         "verbose" : 0

@@ -73,10 +73,10 @@ bool FaceDetectTfSurvStage::Process(CompletedRequestPtr &completed_request)
 	bool motion_detected;
 	completed_request->post_process_metadata.Get("motion_detect.result", motion_detected);
 
-    if(!motion_detected)
-        return false;
-    else
-	    return TfStage::Process(completed_request);
+	if (!motion_detected)
+		return false;
+	else
+		return TfStage::Process(completed_request);
 }
 
 void FaceDetectTfSurvStage::readExtras(boost::property_tree::ptree const &params)
@@ -99,8 +99,8 @@ void FaceDetectTfSurvStage::readExtras(boost::property_tree::ptree const &params
 
 void FaceDetectTfSurvStage::checkConfiguration()
 {
-	if (config()->conf_threshold <= 0.0 || config()->conf_threshold > 1.0)
-		throw std::runtime_error("FaceDetectTfSurvStage: Invalid confidence threshold");
+	if (!lores_stream_)
+		throw std::runtime_error("FaceDetectTfSurvStage: Low resolution stream is required");
 }
 
 void FaceDetectTfSurvStage::generateAnchors()

@@ -11,7 +11,7 @@
                 "-r", "--inline",
                 "--web-host", "0.0.0.0",
                 "--profile", "baseline",
-                "--post-process-file", "assets/face_detect_tf.json"
+                "--post-process-file", "assets/surveillance.json"
             ],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "compile&install",

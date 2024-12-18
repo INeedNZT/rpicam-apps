@@ -4,6 +4,8 @@
 
 #include "sentinel_service.hpp"
 
+#define EVENT_LOG_FILE "log.txt"
+
 void SentinelService::Start()
 {
 	if (running_)
@@ -46,11 +48,45 @@ void SentinelService::run()
 	{
 		std::unique_lock<std::mutex> lock(mutex_);
 		cv_.wait(lock, [this] { return !event_item_queue_.empty(); });
+
 		EventItem item = std::move(event_item_queue_.front());
 		event_item_queue_.pop();
-		// logEvent();
-		if (item.completed_request->sequence % snapshot_save_rate_ == 0)
-			saveSnapshot(item.completed_request, item.stream, item.detected_boxes, item.scores);
+
+		CompletedRequestPtr completed_request = item.completed_request;
+		StreamInfo stream_info = app_->GetStreamInfo(item.stream);
+		FrameBuffer *buffer = completed_request->buffers[item.stream];
+		BufferReadSync r(app_, buffer);
+		libcamera::Span<uint8_t> span = r.Get()[0];
+
+		auto ts = completed_request->metadata.get(controls::SensorTimestamp);
+		int64_t timestamp_us = ts ? *ts : buffer->metadata().timestamp;
+		timestamp_us /= 1000;
+
+		if (time_offset_ == 0)
+			time_offset_ = timestamp_us;
+		if (event_start_time_ == 0)
+			event_start_time_ = timestamp_us;
+
+		frame_copy_.assign(span.data(), span.data() + span.size());
+
+		if (completed_request->sequence % event_save_rate_ == 0)
+		{
+			logEvent(item.motion_detected, item.detected_boxes, item.scores, timestamp_us);
+			saveSnapshot(item.motion_detected, item.detected_boxes, item.scores, timestamp_us, stream_info);
+		}
+
+		if (timestamp_us - event_start_time_ >= event_interval_sec_ * 1000000)
+		{
+			// End event and clear resource
+			event_dir_.clear();
+			log_file_.close();
+			event_start_time_ = 0;
+		}
+		else
+		{
+			// Extend event time
+			event_start_time_ = timestamp_us;
+		}
 	}
 }
 
@@ -137,8 +173,38 @@ static void drawRectangle(uint8_t *yuv420_buffer, const std::vector<float> &box,
 	}
 }
 
-void SentinelService::logEvent()
+void SentinelService::logEvent(bool motion_detected, std::vector<std::vector<float>> &detected_boxes,
+							   std::vector<float> &scores, int64_t timestamp_us)
 {
+	int64_t sys_timestamp = SurvOptions::GetSysTimestamp(timestamp_us - time_offset_);
+	time_t sys_time_sec = static_cast<time_t>(sys_timestamp / 1000000);
+
+	std::filesystem::create_directories(event_root_dir_);
+
+	if (event_dir_.empty())
+	{
+		event_dir_ = event_root_dir_ + "/" + std::to_string(sys_time_sec);
+		std::filesystem::create_directories(event_dir_);
+	}
+
+	std::string old_dir = event_dir_;
+	if (motion_detected && event_dir_.find("_m") == std::string::npos)
+		event_dir_ += "_m";
+	if (!detected_boxes.empty() && !scores.empty() && event_dir_.find("_f") == std::string::npos)
+		event_dir_ += "_f";
+	std::filesystem::rename(old_dir, event_dir_);
+
+	if (!log_file_.is_open())
+	{
+		std::string log_path = event_dir_ + "/" + EVENT_LOG_FILE;
+		log_file_.open(log_path, std::ios::out | std::ios::app);
+		if (!log_file_)
+			throw std::runtime_error("Failed to create event log file");
+	}
+
+	log_file_ << sys_time_sec << ":" << (motion_detected ? "m" : "")
+			  << ((!detected_boxes.empty() && !scores.empty()) ? "f" : "") << "\n";
+	log_file_.flush();
 }
 
 static void YUV420_to_JPEG(const uint8_t *input, const StreamInfo &info, const int quality, const unsigned int restart,
@@ -192,41 +258,26 @@ static void YUV420_to_JPEG(const uint8_t *input, const StreamInfo &info, const i
 	jpeg_destroy_compress(&cinfo);
 }
 
-void SentinelService::saveSnapshot(CompletedRequestPtr &completed_request, Stream *stream,
-								   std::vector<std::vector<float>> &detected_boxes, std::vector<float> &scores)
+void SentinelService::saveSnapshot(bool motion_detected, std::vector<std::vector<float>> &detected_boxes,
+								   std::vector<float> &scores, int64_t timestamp_us, StreamInfo stream_info)
 {
-	FrameBuffer *buffer = completed_request->buffers[stream];
-	BufferReadSync r(app_, buffer);
-	libcamera::Span<uint8_t> span = r.Get()[0];
-
-	auto ts = completed_request->metadata.get(controls::SensorTimestamp);
-	int64_t timestamp_us = ts ? *ts : buffer->metadata().timestamp / 1000;
-
-	if (time_offset_ == 0)
-		time_offset_ = timestamp_us;
-
-	int64_t sys_timestamp = SurvOptions::GetSysTimestamp(timestamp_us - time_offset_);
-	time_t sys_time_sec = static_cast<time_t>(sys_timestamp / 1000000);
-
-	frame_copy_.assign(span.data(), span.data() + span.size());
-
-	StreamInfo lores_info = app_->GetStreamInfo(stream);
-
 	for (size_t i = 0; i < detected_boxes.size(); ++i)
 	{
-		drawRectangle(frame_copy_.data(), detected_boxes[i], lores_info.width, lores_info.height, scores[i], 2);
+		drawRectangle(frame_copy_.data(), detected_boxes[i], stream_info.width, stream_info.height, scores[i], 2);
 	}
 
 	FILE *fp = nullptr;
 	uint8_t *jpeg_buffer = nullptr;
 	unsigned long jpeg_len = 0;
+
+	int64_t sys_timestamp = SurvOptions::GetSysTimestamp(timestamp_us - time_offset_);
+	time_t sys_time_sec = static_cast<time_t>(sys_timestamp / 1000000);
 	std::string filename = event_dir_ + "/" + std::to_string(sys_time_sec) + ".jpg";
 
 	try
 	{
-		std::filesystem::create_directories(event_dir_);
 		fp = fopen(filename.c_str(), "wb");
-		YUV420_to_JPEG((uint8_t *)(frame_copy_.data()), lores_info, 90, 0, jpeg_buffer, jpeg_len);
+		YUV420_to_JPEG((uint8_t *)(frame_copy_.data()), stream_info, 90, 0, jpeg_buffer, jpeg_len);
 		fwrite(jpeg_buffer, jpeg_len, 1, fp);
 		fclose(fp);
 		fp = nullptr;

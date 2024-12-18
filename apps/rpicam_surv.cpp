@@ -64,15 +64,18 @@ public:
 
 	void InvokeSentinel(CompletedRequestPtr &completed_request, Stream *stream)
 	{
+		bool motion_detected = false;
 		std::vector<std::vector<float>> detected_boxes;
 		std::vector<float> detected_scores;
+
+		completed_request->post_process_metadata.Get("motion_detect.result", motion_detected);
 		completed_request->post_process_metadata.Get("face_detect.boxes", detected_boxes);
 		completed_request->post_process_metadata.Get("face_detect.scores", detected_scores);
 
-		if (detected_boxes.empty() || detected_scores.empty())
+		if (!motion_detected && (detected_boxes.empty() || detected_scores.empty()))
 			return;
 
-		EventItem item(completed_request, stream, detected_boxes, detected_scores);
+		EventItem item(completed_request, stream, motion_detected, detected_boxes, detected_scores);
 		sentinel_service_->RecordEvent(std::move(item));
 	}
 

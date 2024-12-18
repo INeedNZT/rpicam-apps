@@ -145,7 +145,6 @@ void SurvOutput::finalizePlaylist()
 	if (playlist_file_.is_open())
 	{
 		playlist_file_ << "#EXT-X-ENDLIST\n";
-		playlist_file_.flush();
 		playlist_file_.close();
 	}
 }

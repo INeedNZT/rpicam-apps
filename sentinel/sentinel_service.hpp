@@ -15,18 +15,20 @@ using FrameBuffer = libcamera::FrameBuffer;
 struct EventItem
 {
 	EventItem() : stream(nullptr) {}
-	EventItem(CompletedRequestPtr &b, Stream *s, const std::vector<std::vector<float>> &vdb,
+	EventItem(CompletedRequestPtr &b, Stream *s, bool md, const std::vector<std::vector<float>> &vdb,
 			  const std::vector<float> &vs)
-		: completed_request(b), stream(s), detected_boxes(vdb), scores(vs)
+		: completed_request(b), stream(s), motion_detected(md), detected_boxes(vdb), scores(vs)
 	{
 	}
 	EventItem(EventItem &&other)
 	{
 		completed_request = std::move(other.completed_request);
 		stream = other.stream;
+		motion_detected = other.motion_detected;
 		detected_boxes = std::move(other.detected_boxes);
 		scores = std::move(other.scores);
 		other.stream = nullptr;
+		other.motion_detected = false;
 		other.detected_boxes.clear();
 		other.scores.clear();
 	}
@@ -34,15 +36,18 @@ struct EventItem
 	{
 		completed_request = std::move(other.completed_request);
 		stream = other.stream;
+		motion_detected = other.motion_detected;
 		detected_boxes = std::move(other.detected_boxes);
 		scores = std::move(other.scores);
 		other.stream = nullptr;
+		other.motion_detected = false;
 		other.detected_boxes.clear();
 		other.scores.clear();
 		return *this;
 	}
 	CompletedRequestPtr completed_request;
 	Stream *stream;
+	bool motion_detected;
 	std::vector<std::vector<float>> detected_boxes;
 	std::vector<float> scores;
 };
@@ -51,9 +56,9 @@ class SentinelService
 {
 public:
 	SentinelService(RPiCamEncoder<SurvOptions> *app)
-		: running_(false), snapshot_save_rate_(app->GetOptions()->save_rate),
-		  event_dir_(app->GetOptions()->event_directory), event_interval_sec_(app->GetOptions()->event_interval),
-		  time_offset_(0), app_(app)
+		: running_(false), time_offset_(0), event_start_time_(0), event_dir_(""),
+		  event_root_dir_(app->GetOptions()->event_directory), event_save_rate_(app->GetOptions()->save_rate),
+		  event_interval_sec_(app->GetOptions()->event_interval), app_(app)
 	{
 	}
 
@@ -68,26 +73,25 @@ public:
 
 private:
 	bool running_;
-
-	unsigned int snapshot_save_rate_;
-
-	std::string event_dir_;
-	unsigned int event_interval_sec_;
 	int64_t time_offset_;
+	int64_t event_start_time_;
+	std::string event_dir_;
+	std::string event_root_dir_;
+	unsigned int event_save_rate_;
+	unsigned int event_interval_sec_;
+	std::ofstream log_file_;
 
 	RPiCamEncoder<SurvOptions> *app_;
 
 	std::mutex mutex_;
 	std::condition_variable cv_;
-
 	std::queue<EventItem> event_item_queue_;
-
 	std::thread *event_loop_thread_;
-
 	std::vector<uint8_t> frame_copy_;
 
 	void run();
-	void logEvent();
-	void saveSnapshot(CompletedRequestPtr &completed_request, Stream *stream,
-					  std::vector<std::vector<float>> &detected_boxes, std::vector<float> &scores);
+	void logEvent(bool motion_detected, std::vector<std::vector<float>> &detected_boxes, std::vector<float> &scores,
+				  int64_t timestamp_us);
+	void saveSnapshot(bool motion_detected, std::vector<std::vector<float>> &detected_boxes, std::vector<float> &scores,
+					  int64_t timestamp_us, StreamInfo stream_info);
 };

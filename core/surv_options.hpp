@@ -42,7 +42,7 @@ struct SurvOptions : public VideoOptions
 			"event-interval", value<unsigned int>(&event_interval)->default_value(15),
 			"Set the time interval in seconds between events before the next event check.")(
 			"save-rate", value<unsigned int>(&save_rate)->default_value(30),
-			"Set the frame rate for saving a captured snapshot.")	
+			"Set the frame rate for saving an event.")	
 			;
 	}
 

@@ -4,8 +4,6 @@
 
 #include "sentinel_service.hpp"
 
-#define EVENT_LOG_FILE "log.txt"
-
 void SentinelService::Start()
 {
 	if (running_)
@@ -14,6 +12,8 @@ void SentinelService::Start()
 	}
 
 	running_ = true;
+
+	std::filesystem::create_directories(event_root_dir_);
 
 	event_loop_thread_ = new std::thread(&SentinelService::run, this);
 }
@@ -178,8 +178,6 @@ void SentinelService::logEvent(bool motion_detected, std::vector<std::vector<flo
 {
 	int64_t sys_timestamp = SurvOptions::GetSysTimestamp(timestamp_us - time_offset_);
 	time_t sys_time_sec = static_cast<time_t>(sys_timestamp / 1000000);
-
-	std::filesystem::create_directories(event_root_dir_);
 
 	if (event_dir_.empty())
 	{

@@ -2,8 +2,7 @@ const canvas = document.createElement('canvas');
 document.body.getElementsByClassName('canvas-container')[0].append(canvas);
 
 // Create h264 player
-// const uri = `ws://${document.location.host}/live`
-const uri = 'ws://192.168.110.229:8000/live';
+const uri = `ws://${document.location.host}/live`;
 const ww = new Worker('/js/http-live-player-worker.js');
 const ofc = canvas.transferControlToOffscreen();
 ww.postMessage({

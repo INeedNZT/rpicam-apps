@@ -51,7 +51,7 @@
             <svg class="nav-icon">
               <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-storage"></use>
             </svg> Footage Playback</a></li>
-        <li class="nav-item"><a class="nav-link" href="events.html">
+        <li class="nav-item"><a class="nav-link" href="event.html">
             <svg class="nav-icon">
               <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-warning"></use>
             </svg> Security Events</a></li>
@@ -104,100 +104,34 @@
       </header>
       <div class="body flex-grow-1">
         <div class="container-lg px-4">
-          <div class="col-12">
-            <div class="card">
+          <div class="col-12" id="card-container">
+            <div class="card" style="display: none;">
               <div class="card-header d-flex justify-content-between align-items-center">
-                <p class="mb-0 d-none d-sm-block">Security Event Logs</p><span class="fw-bold d-inline-block">2024 11-10</span><span></span>
-                <button class="btn" type="button" data-coreui-toggle="collapse" data-coreui-target="#collapseLog1">
+                <p class="mb-0 d-none d-sm-block">Security Event</p><span class="fw-bold d-inline-block event-time"></span><span class="badge d-inline-block event-type text-bg-warning"></span>
+                <button class="btn d-none" type="button" data-coreui-toggle="collapse" data-coreui-target="#event">
                   <svg class="icon">
                     <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-minus"></use>
                   </svg>
                 </button>
-                <button class="btn d-none" type="button" data-coreui-toggle="collapse" data-coreui-target="#collapseLog1">
+                <button class="btn" type="button" data-coreui-toggle="collapse" data-coreui-target="#event">
                   <svg class="icon">
                     <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-list"></use>
                   </svg>
                 </button>
               </div>
-              <div class="accordion date-log show" id="collapseLog1">
-                <div class="container-lg accordion-flush p-0 m-0">
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="heading1">
-                      <button class="accordion-button collapsed" type="button" data-coreui-toggle="collapse" data-coreui-target="#collapse1">
-                        <div class="d-flex justify-content-between me-2 col-10"><span>Motion detected</span><span class="d-none d-sm-block">2024 11-10 14:32</span><span class="ms-1 badge text-bg-warning">Low Risk</span></div>
-                      </button>
-                    </h2>
-                    <div class="accordion-collapse event-log collapse" id="collapse1" aria-labelledby="heading1" data-coreui-parent="#collapseLog1">
-                      <div class="accordion-body"><img class="img-thumbnail rounded-0" src="assets/img/full.jpg" alt=""></div>
-                    </div>
+              <div class="accordion date-log collapse" id="event">
+                <div class="log-container container-lg accordion-flush p-0 m-0">
+                  <div class="loading text-center" style="display: none;">
+                    <div class="spinner-border" role="status"></div><span class="visually-hidden">Loading...</span>
                   </div>
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="heading2">
-                      <button class="accordion-button collapsed" type="button" data-coreui-toggle="collapse" data-coreui-target="#collapse2">
-                        <div class="d-flex justify-content-between me-2 col-10"><span class="me-4">Face detected</span><span class="d-none d-sm-block">2024 11-10 14:32</span><span class="ms-1 badge text-bg-danger">High Risk</span></div>
+                  <div class="log accordion-item" style="display: none;">
+                    <h2 class="accordion-header" id="heading">
+                      <button class="accordion-button collapsed" type="button" data-coreui-toggle="collapse" data-coreui-target="#log">
+                        <div class="d-flex justify-content-between me-2 col-10"><span class="log-name"> </span><span class="d-none d-sm-block log-time"></span><span class="ms-1 badge log-type"></span></div>
                       </button>
                     </h2>
-                    <div class="accordion-collapse event-log collapse" id="collapse2" aria-labelledby="heading2" data-coreui-parent="#collapseLog1">
-                      <div class="accordion-body"><img class="img-thumbnail rounded-0" src="assets/img/full.jpg" alt=""></div>
-                    </div>
-                  </div>
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="heading3">
-                      <button class="accordion-button collapsed" type="button" data-coreui-toggle="collapse" data-coreui-target="#collapse3">
-                        <div class="d-flex justify-content-between me-2 col-10"><span>Motion detected</span><span class="d-none d-sm-block">2024 11-10 14:32</span><span class="ms-1 badge text-bg-warning">Low Risk</span></div>
-                      </button>
-                    </h2>
-                    <div class="accordion-collapse event-log collapse" id="collapse3" aria-labelledby="heading3" data-coreui-parent="#collapseLog1">
-                      <div class="accordion-body"><img class="img-thumbnail rounded-0" src="assets/img/full.jpg" alt=""></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-header d-flex justify-content-between align-items-center">
-                <p class="mb-0 d-none d-sm-block">Security Event Logs</p><span class="fw-bold d-inline-block">2024 11-13</span><span></span>
-                <button class="btn d-none" type="button" data-coreui-toggle="collapse" data-coreui-target="#collapseLog2">
-                  <svg class="icon">
-                    <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-minus"></use>
-                  </svg>
-                </button>
-                <button class="btn" type="button" data-coreui-toggle="collapse" data-coreui-target="#collapseLog2">
-                  <svg class="icon">
-                    <use xlink:href="vendors/@coreui/icons/svg/free.svg#cil-list"></use>
-                  </svg>
-                </button>
-              </div>
-              <div class="accordion date-log collapse" id="collapseLog2">
-                <div class="container-lg accordion-flush p-0 m-0">
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="heading2-1">
-                      <button class="accordion-button collapsed" type="button" data-coreui-toggle="collapse" data-coreui-target="#collapse2-1">
-                        <div class="d-flex justify-content-between me-2 col-10"><span>Motion detected</span><span class="d-none d-sm-block">2024 11-10 14:32</span><span class="ms-1 badge text-bg-warning">Low Risk</span></div>
-                      </button>
-                    </h2>
-                    <div class="accordion-collapse event-log collapse" id="collapse2-1" aria-labelledby="heading2-1" data-coreui-parent="#collapseLog2">
-                      <div class="accordion-body"><img class="img-thumbnail rounded-0" src="assets/img/full.jpg" alt=""></div>
-                    </div>
-                  </div>
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="heading2-2">
-                      <button class="accordion-button collapsed" type="button" data-coreui-toggle="collapse" data-coreui-target="#collapse2-2">
-                        <div class="d-flex justify-content-between me-2 col-10"><span class="me-4">Face detected</span><span class="d-none d-sm-block">2024 11-10 14:32</span><span class="ms-1 badge text-bg-danger">High Risk</span></div>
-                      </button>
-                    </h2>
-                    <div class="accordion-collapse event-log collapse" id="collapse2-2" aria-labelledby="heading2-2" data-coreui-parent="#collapseLog2">
-                      <div class="accordion-body"><img class="img-thumbnail rounded-0" src="assets/img/full.jpg" alt=""></div>
-                    </div>
-                  </div>
-                  <div class="accordion-item">
-                    <h2 class="accordion-header" id="heading2-3">
-                      <button class="accordion-button collapsed" type="button" data-coreui-toggle="collapse" data-coreui-target="#collapse2-3">
-                        <div class="d-flex justify-content-between me-2 col-10"><span>Motion detected</span><span class="d-none d-sm-block">2024 11-10 14:32</span><span class="ms-1 badge text-bg-warning">Low Risk</span></div>
-                      </button>
-                    </h2>
-                    <div class="accordion-collapse event-log collapse" id="collapse2-3" aria-labelledby="heading2-3" data-coreui-parent="#collapseLog2">
-                      <div class="accordion-body"><img class="img-thumbnail rounded-0" src="assets/img/full.jpg" alt=""></div>
+                    <div class="accordion-collapse event-log collapse" id="log" aria-labelledby="heading">
+                      <div class="accordion-body"><img class="img-thumbnail rounded-0" src="assets/img/placeholder-img.png" alt=""></div>
                     </div>
                   </div>
                 </div>
@@ -226,7 +160,7 @@
       });
     </script>
     <script src="vendors/@coreui/utils/js/index.js"></script>
-    <script src="/js/events.js"></script>
+    <script src="/js/event.js"></script>
     <script>
     </script>
 

@@ -7,6 +7,8 @@
 #define THUMB_NAME "thumbnail.jpg"
 #define PLAYLIST_NAME "playlist.m3u8"
 #define FOOTAGE_PREFIX "/footage"
+#define EVENT_PREFIX "/events"
+#define EVENT_LOG_FILE "log.txt"
 
 struct SurvOptions : public VideoOptions
 {

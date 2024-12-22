@@ -98,3 +98,102 @@ std::vector<hour_playlist> getHourPlaylistByDate(std::string footage_root_dir, s
 
 	return playlists;
 }
+
+std::vector<event> getEventListByDate(std::string event_root_dir, std::time_t date)
+{
+	std::vector<event> events;
+	for (const auto &entry : std::filesystem::directory_iterator(event_root_dir))
+	{
+		if (entry.is_directory())
+		{
+			std::string folder_name = entry.path().filename().string();
+			event ev;
+			size_t pos;
+
+			ev.event_id = folder_name;
+
+			if ((pos = folder_name.find("_m")) != std::string::npos)
+			{
+				ev.type = event_type::Motion;
+				folder_name.erase(pos, 2);
+			}
+
+			if ((pos = folder_name.find("_f")) != std::string::npos)
+			{
+				ev.type = event_type::FaceRecognition;
+				folder_name.erase(pos, 2);
+			}
+
+			ev.start_time = std::stoll(folder_name);
+
+			if (date != 0)
+			{
+				std::tm date_tm = *std::localtime(&date);
+				date_tm.tm_hour = 0;
+				date_tm.tm_min = 0;
+				date_tm.tm_sec = 0;
+				std::time_t date_start = std::mktime(&date_tm);
+
+				date_tm.tm_hour = 23;
+				date_tm.tm_min = 59;
+				date_tm.tm_sec = 59;
+				std::time_t date_end = std::mktime(&date_tm);
+
+				if (ev.start_time < date_start || ev.start_time > date_end)
+				{
+					continue;
+				}
+			}
+
+			events.push_back(ev);
+		}
+	}
+
+	return events;
+}
+
+std::vector<event_log> getEventLogsById(std::string event_root_dir, std::string event_id)
+{
+	std::vector<event_log> event_logs;
+
+	std::filesystem::path event_directory = std::filesystem::path(event_root_dir) / event_id;
+
+	if (!std::filesystem::exists(event_directory) || !std::filesystem::is_directory(event_directory))
+		throw std::runtime_error("Directory does not exist or is not a valid directory.");
+
+	std::filesystem::path log_file = event_directory / EVENT_LOG_FILE;
+
+	if (!std::filesystem::exists(log_file) || !std::filesystem::is_regular_file(log_file))
+		throw std::runtime_error("Log file does not exist or is not a valid file.");
+
+	std::ifstream infile(log_file);
+	if (!infile.is_open())
+		throw std::runtime_error("Failed to open log.txt.");
+
+	std::string line;
+	while (std::getline(infile, line))
+	{
+		event_log log;
+		std::istringstream iss(line);
+
+		std::size_t pos = line.find(':');
+		if (pos == std::string::npos)
+			throw std::runtime_error("Invalid log entry format in log.txt.");
+
+		std::string timestamp = line.substr(0, pos);
+		std::string message = line.substr(pos + 1);
+
+		log.log_time = std::stoll(timestamp);
+		log.snapshot_path = std::string(EVENT_PREFIX) + "/" + event_id + "/" + timestamp + ".jpg";
+
+		if (message.find("m") != std::string::npos)
+			log.type = event_type::Motion;
+
+		if (message.find("f") != std::string::npos)
+			log.type = event_type::FaceRecognition;
+
+		event_logs.push_back(log);
+	}
+
+	return event_logs;
+}

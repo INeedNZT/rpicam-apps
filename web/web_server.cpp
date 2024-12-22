@@ -106,9 +106,11 @@ public:
 		: WebServer(options), event_loop_thread_(nullptr), streaming_(false), max_queue_size_(60),
 		  streaming_thread_(nullptr), video_width_(options->width), video_height_(options->height)
 	{
+		event_dir_ = options->event_directory;
 		footage_dir_ = options->footage_directory;
 		page404_ = options->web_root_directory + "/404.html";
-		root_dir_ = options->web_root_directory + "," + FOOTAGE_PREFIX + "=" + options->footage_directory;
+		root_dir_ = options->web_root_directory + "," + FOOTAGE_PREFIX + "=" + options->footage_directory + "," +
+					EVENT_PREFIX + "=" + options->event_directory;
 		http_server_options_ = {};
 		http_server_options_.page404 = page404_.c_str();
 		http_server_options_.root_dir = root_dir_.c_str();
@@ -192,6 +194,7 @@ private:
 	std::string page404_;
 	std::string root_dir_;
 	std::string footage_dir_;
+	std::string event_dir_;
 
 	std::string date_format_;
 	std::string time_format_;
@@ -246,6 +249,16 @@ private:
 		mg_http_reply(c, 200, "Content-Type: application/json\r\n", toJSON(footage, date_format).c_str());
 	}
 
+	static void surv_events_handler(struct mg_connection *c, struct mg_http_message *hm, std::string event_dir,
+									std::string date_format, std::string time_format)
+	{
+		long timestamp_long = mg_json_get_long(hm->body, "$.et", 0);
+		if (timestamp_long < 0)
+			throw std::invalid_argument("Invalid timestamp value");
+		std::vector<event> events = getEventListByDate(event_dir, static_cast<time_t>(timestamp_long));
+		mg_http_reply(c, 200, "Content-Type: application/json\r\n", toJSON(events, date_format, time_format).c_str());
+	}
+
 	static void footage_playlist_handler(struct mg_connection *c, struct mg_http_message *hm, std::string footage_dir,
 										 std::string time_format)
 	{
@@ -254,6 +267,16 @@ private:
 			throw std::invalid_argument("Invalid timestamp value");
 		std::vector<hour_playlist> playlist = getHourPlaylistByDate(footage_dir, static_cast<time_t>(timestamp_long));
 		mg_http_reply(c, 200, "Content-Type: application/json\r\n", toJSON(playlist, time_format).c_str());
+	}
+
+	static void event_logs_handler(struct mg_connection *c, struct mg_http_message *hm, std::string event_dir,
+								   std::string time_format)
+	{
+		std::string event_id = std::string(mg_json_get_str(hm->body, "$.ei"));
+		if (event_id.empty())
+			throw std::invalid_argument("Invalid event id");
+		std::vector<event_log> logs = getEventLogsById(event_dir, event_id);
+		mg_http_reply(c, 200, "Content-Type: application/json\r\n", toJSON(logs, time_format).c_str());
 	}
 
 	static void eventHandler(struct mg_connection *c, int ev, void *ev_data)
@@ -277,9 +300,18 @@ private:
 			{
 				handler_wrapper(surv_footage_handler, c, hm, server->footage_dir_, server->date_format_);
 			}
+			else if (mg_match(hm->uri, mg_str("/api/survevents"), NULL))
+			{
+				handler_wrapper(surv_events_handler, c, hm, server->event_dir_, server->date_format_,
+								server->time_format_);
+			}
 			else if (mg_match(hm->uri, mg_str("/api/playlist"), NULL))
 			{
 				handler_wrapper(footage_playlist_handler, c, hm, server->footage_dir_, server->time_format_);
+			}
+			else if (mg_match(hm->uri, mg_str("/api/eventlogs"), NULL))
+			{
+				handler_wrapper(event_logs_handler, c, hm, server->event_dir_, server->time_format_);
 			}
 			else if (mg_match(hm->uri, mg_str("/live"), NULL))
 			{
@@ -316,7 +348,8 @@ private:
 		else if (ev == MG_EV_WS_OPEN)
 		{
 			char json[50];
-			std::sprintf(json, R"({"action": "init", "width": %d, "height": %d})", server->video_width_, server->video_height_);
+			std::sprintf(json, R"({"action": "init", "width": %d, "height": %d})", server->video_width_,
+						 server->video_height_);
 			mg_ws_send(c, json, std::strlen(json), WEBSOCKET_OP_TEXT);
 			MG_INFO(("WS connection opened"));
 		}

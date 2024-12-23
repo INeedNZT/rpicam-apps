@@ -348,8 +348,7 @@ private:
 		else if (ev == MG_EV_WS_OPEN)
 		{
 			char json[50];
-			std::sprintf(json, R"({"action": "init", "width": %d, "height": %d})", server->video_width_,
-						 server->video_height_);
+			std::sprintf(json, R"({"action": "init", "width": %d, "height": %d})", server->video_width_, server->video_height_);
 			mg_ws_send(c, json, std::strlen(json), WEBSOCKET_OP_TEXT);
 			MG_INFO(("WS connection opened"));
 		}

@@ -67,6 +67,9 @@ void SentinelService::run()
 		if (event_start_time_ == 0)
 			event_start_time_ = timestamp_us;
 
+		if (!item.motion_detected && (item.detected_boxes.empty() || item.scores.empty()))
+			continue;
+
 		frame_copy_.assign(span.data(), span.data() + span.size());
 
 		if (completed_request->sequence % event_save_rate_ == 0)

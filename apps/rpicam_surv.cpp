@@ -72,9 +72,6 @@ public:
 		completed_request->post_process_metadata.Get("face_detect.boxes", detected_boxes);
 		completed_request->post_process_metadata.Get("face_detect.scores", detected_scores);
 
-		if (!motion_detected && (detected_boxes.empty() || detected_scores.empty()))
-			return;
-
 		EventItem item(completed_request, stream, motion_detected, detected_boxes, detected_scores);
 		sentinel_service_->RecordEvent(std::move(item));
 	}

@@ -11,7 +11,10 @@
                 "-r", "--inline",
                 "--web-host", "0.0.0.0",
                 "--profile", "baseline",
-                "--post-process-file", "assets/surveillance.json"
+                "--post-process-file", "assets/surveillance.json",
+                "--alert-config-file", "assets/alert_config.json",
+                "--info-text", "",
+                "--autofocus-mode", "manual"
             ],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "compile&install",

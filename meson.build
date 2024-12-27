@@ -96,6 +96,7 @@ subdir('apps')
 
 summary({
             'libav encoder' : enable_libav,
+            'libcurl email' : enable_libcurl,
             'drm preview' : enable_drm,
             'egl preview' : enable_egl,
             'qt preview' : enable_qt,

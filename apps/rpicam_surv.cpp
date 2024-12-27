@@ -73,7 +73,7 @@ public:
 		completed_request->post_process_metadata.Get("face_detect.scores", detected_scores);
 
 		EventItem item(completed_request, stream, motion_detected, detected_boxes, detected_scores);
-		sentinel_service_->RecordEvent(std::move(item));
+		sentinel_service_->RecordEvent(item);
 	}
 
 private:

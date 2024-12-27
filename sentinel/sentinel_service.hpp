@@ -8,6 +8,7 @@
 #include "core/rpicam_encoder.hpp"
 
 #include "core/surv_options.hpp"
+#include "alert_service.hpp"
 
 using Stream = libcamera::Stream;
 using FrameBuffer = libcamera::FrameBuffer;
@@ -56,7 +57,7 @@ class SentinelService
 {
 public:
 	SentinelService(RPiCamEncoder<SurvOptions> *app)
-		: running_(false), time_offset_(0), event_start_time_(0), event_dir_(""),
+		: running_(false), time_offset_(0), event_start_time_(0), event_notif_flag_(0), event_dir_(""),
 		  event_root_dir_(app->GetOptions()->event_directory), event_save_rate_(app->GetOptions()->save_rate),
 		  event_interval_sec_(app->GetOptions()->event_interval), app_(app)
 	{
@@ -67,7 +68,7 @@ public:
 	void Start();
 	void Stop();
 
-	void RecordEvent(EventItem &&event_item);
+	void RecordEvent(EventItem &event_item);
 
 	static std::unique_ptr<SentinelService> Create(RPiCamEncoder<SurvOptions> *app);
 
@@ -75,6 +76,7 @@ private:
 	bool running_;
 	int64_t time_offset_;
 	int64_t event_start_time_;
+	int64_t event_notif_flag_;
 	std::string event_dir_;
 	std::string event_root_dir_;
 	unsigned int event_save_rate_;
@@ -89,9 +91,15 @@ private:
 	std::thread *event_loop_thread_;
 	std::vector<uint8_t> frame_copy_;
 
+#if LIBCURL_PRESENT
+	EmailService email_service_;
+#endif
+
 	void run();
 	void logEvent(bool motion_detected, std::vector<std::vector<float>> &detected_boxes, std::vector<float> &scores,
 				  int64_t timestamp_us);
 	void saveSnapshot(bool motion_detected, std::vector<std::vector<float>> &detected_boxes, std::vector<float> &scores,
-					  int64_t timestamp_us, StreamInfo stream_info);
+					  int64_t timestamp_us, StreamInfo stream_info, std::shared_ptr<uint8_t[]> &jpeg_buffer_ptr,
+					  size_t &jpeg_buffer_size);
+	void loadAlertConfig();
 };

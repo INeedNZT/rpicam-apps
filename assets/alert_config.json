@@ -1,0 +1,11 @@
+{
+    "email_service": {
+        "smtp_server_url": "smtp://smtp.example.com",
+        "sender_address": "rpicamsurv@example.com",
+        "password": "passwordORauthorization",
+        "sender_name": "Rpicam Surveillance",
+        "receiver_address": "rpicamsurv@example.com",
+        "receiver_name": "Alert Receiver",
+        "template_file": "/usr/local/share/email-assets/alert.html"
+    }
+}

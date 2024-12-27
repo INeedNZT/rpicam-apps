@@ -41,10 +41,12 @@ struct SurvOptions : public VideoOptions
 			"event-directory",
 			value<std::string>(&event_directory)->default_value(std::string(home_directory) + "/events"),
 			"Path to store the security event logs and snapshots.")(
-			"event-interval", value<unsigned int>(&event_interval)->default_value(15),
+			"event-interval", value<unsigned int>(&event_interval)->default_value(30),
 			"Set the time interval in seconds between events before the next event check.")(
 			"save-rate", value<unsigned int>(&save_rate)->default_value(30),
-			"Set the frame rate for saving an event.")	
+			"Set the frame rate for saving an event, including log and snapshot image.")(
+			"alert-config-file", value<std::string>(&alert_config_file),
+			"Set the file name for configuring the security alert.")
 			;
 	}
 
@@ -62,6 +64,8 @@ struct SurvOptions : public VideoOptions
 	std::string event_directory;
 	unsigned int event_interval;
 	unsigned int save_rate;
+
+	std::string alert_config_file;
 
 	static int64_t sys_start_timestamp;
 

@@ -103,8 +103,8 @@ class MongooseServer : public WebServer
 {
 public:
 	MongooseServer(SurvOptions const *options)
-		: WebServer(options), event_loop_thread_(nullptr), streaming_(false), max_queue_size_(60),
-		  streaming_thread_(nullptr), video_width_(options->width), video_height_(options->height)
+		: WebServer(options), streaming_(false), max_queue_size_(60), video_width_(options->width),
+		  video_height_(options->height)
 	{
 		event_dir_ = options->event_directory;
 		footage_dir_ = options->footage_directory;
@@ -190,7 +190,7 @@ private:
 	std::string time_format_;
 
 	struct mg_mgr mgr_;
-	std::thread *event_loop_thread_;
+	std::thread event_loop_thread_;
 	struct mg_http_serve_opts http_server_options_;
 
 	bool streaming_;
@@ -198,7 +198,7 @@ private:
 	unsigned int max_queue_size_;
 	std::mutex frame_queue_mutex_;
 	std::condition_variable frame_queue_cv_;
-	std::thread *streaming_thread_;
+	std::thread streaming_thread_;
 
 	unsigned int video_width_;
 	unsigned int video_height_;

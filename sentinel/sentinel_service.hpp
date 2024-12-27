@@ -88,7 +88,7 @@ private:
 	std::mutex mutex_;
 	std::condition_variable cv_;
 	std::queue<EventItem> event_item_queue_;
-	std::thread *event_loop_thread_;
+	std::thread event_loop_thread_;
 	std::vector<uint8_t> frame_copy_;
 
 #if LIBCURL_PRESENT

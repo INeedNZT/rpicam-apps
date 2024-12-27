@@ -36,68 +36,68 @@ struct MsgWrapper
 	FrameBufferPtr ptr;
 };
 
-// struct Log
-// {
-// 	std::string const log_dir;
-// 	std::string log_fname;
-// 	std::ofstream log_ofs;
-// 	bool new_line;
-// 	std::mutex log_mutex;
+struct Log
+{
+	std::string const log_dir;
+	std::string log_fname;
+	std::ofstream log_ofs;
+	bool new_line;
+	std::mutex log_mutex;
 
-// 	Log(const std::string &log_dir) : log_dir(log_dir), log_fname(""), new_line(true), log_mutex() {}
+	Log(const std::string &log_dir) : log_dir(log_dir), log_fname(""), new_line(true), log_mutex() {}
 
-// 	~Log()
-// 	{
-// 		if (log_ofs.is_open())
-// 			log_ofs.close();
-// 	}
-// };
+	~Log()
+	{
+		if (log_ofs.is_open())
+			log_ofs.close();
+	}
+};
 
-// static void log_fn(char c, void *param)
-// {
-// 	struct Log *log = static_cast<Log *>(param);
-// 	std::string current_date = SurvOptions::ToTimeStr(std::time(nullptr), "%Y-%m-%d");
+static void log_fn(char c, void *param)
+{
+	struct Log *log = static_cast<Log *>(param);
+	std::string current_date = SurvOptions::ToTimeStr(std::time(nullptr), "%Y-%m-%d");
 
-// 	if (log->log_fname != current_date)
-// 	{
-// 		if (log->log_ofs.is_open())
-// 		{
-// 			log->log_ofs.close();
-// 		}
+	if (log->log_fname != current_date)
+	{
+		if (log->log_ofs.is_open())
+		{
+			log->log_ofs.close();
+		}
 
-// 		log->log_fname = current_date;
+		log->log_fname = current_date;
 
-// 		if (!std::filesystem::exists(log->log_dir))
-// 			std::filesystem::create_directories(log->log_dir);
+		if (!std::filesystem::exists(log->log_dir))
+			std::filesystem::create_directories(log->log_dir);
 
-// 		std::string log_file_path = log->log_dir + "/" + log->log_fname + ".log";
-// 		log->log_ofs.open(log_file_path, std::ios::out | std::ios::app);
-// 	}
+		std::string log_file_path = log->log_dir + "/" + log->log_fname + ".log";
+		log->log_ofs.open(log_file_path, std::ios::out | std::ios::app);
+	}
 
-// 	if (log->log_ofs.is_open())
-// 	{
-// 		std::lock_guard<std::mutex> guard(log->log_mutex);
+	if (log->log_ofs.is_open())
+	{
+		std::lock_guard<std::mutex> guard(log->log_mutex);
 
-// 		if (log->new_line)
-// 		{
-// 			std::string current_time = SurvOptions::ToTimeStr(std::time(nullptr), "%H:%M:%S");
-// 			log->log_ofs << "[" << current_time << "] ";
-// 			log->new_line = false;
-// 		}
+		if (log->new_line)
+		{
+			std::string current_time = SurvOptions::ToTimeStr(std::time(nullptr), "%H:%M:%S");
+			log->log_ofs << "[" << current_time << "] ";
+			log->new_line = false;
+		}
 
-// 		log->log_ofs << c;
+		log->log_ofs << c;
 
-// 		if (c == '\n')
-// 		{
-// 			log->new_line = true;
-// 			log->log_ofs.flush();
-// 		}
-// 	}
-// 	else
-// 	{
-// 		std::cerr << "Error opening log file" << std::endl;
-// 	}
-// }
+		if (c == '\n')
+		{
+			log->new_line = true;
+			log->log_ofs.flush();
+		}
+	}
+	else
+	{
+		std::cerr << "Error opening log file" << std::endl;
+	}
+}
 
 class MongooseServer : public WebServer
 {
@@ -118,10 +118,12 @@ public:
 		date_format_ = options->footage_date_format;
 		time_format_ = options->playlist_time_format;
 
-		// Log *log = new Log { options->web_log_directory };
+		Log *log = new Log { options->web_log_directory };
+		mg_log_set_fn(log_fn, static_cast<void *>(log));
 
-		// mg_log_set_fn(log_fn, static_cast<void *>(log));
-		mg_log_set(MG_LL_VERBOSE);
+		// Print more debug information if needed
+		// mg_log_set(MG_LL_VERBOSE);
+
 		mg_mgr_init(&mgr_);
 		mg_wakeup_init(&mgr_);
 	}

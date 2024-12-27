@@ -141,10 +141,10 @@ public:
 		mg_http_listen(&mgr_, url.c_str(), eventHandler, this);
 
 		running_ = true;
-		event_loop_thread_ = new std::thread(&MongooseServer::run, this);
+		event_loop_thread_ = std::thread(&MongooseServer::run, this);
 
 		streaming_ = true;
-		streaming_thread_ = new std::thread(&MongooseServer::broadcast, this);
+		streaming_thread_ = std::thread(&MongooseServer::broadcast, this);
 	}
 
 	void Stop() override
@@ -156,23 +156,11 @@ public:
 
 		running_ = false;
 
-		if (event_loop_thread_ && event_loop_thread_->joinable())
-		{
-			event_loop_thread_->join();
-		}
-
-		delete event_loop_thread_;
-		event_loop_thread_ = nullptr;
+		event_loop_thread_.join();
 
 		streaming_ = false;
 
-		if (streaming_thread_ && streaming_thread_->joinable())
-		{
-			streaming_thread_->join();
-		}
-
-		delete streaming_thread_;
-		streaming_thread_ = nullptr;
+		streaming_thread_.join();
 
 		mg_mgr_free(&mgr_);
 	}

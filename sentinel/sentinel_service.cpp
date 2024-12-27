@@ -25,7 +25,7 @@ void SentinelService::Start()
 
 	std::filesystem::create_directories(event_root_dir_);
 
-	event_loop_thread_ = new std::thread(&SentinelService::run, this);
+	event_loop_thread_ = std::thread(&SentinelService::run, this);
 }
 
 void SentinelService::Stop()
@@ -37,13 +37,7 @@ void SentinelService::Stop()
 
 	running_ = false;
 
-	if (event_loop_thread_ && event_loop_thread_->joinable())
-	{
-		event_loop_thread_->join();
-	}
-
-	delete event_loop_thread_;
-	event_loop_thread_ = nullptr;
+	event_loop_thread_.join();
 }
 
 void SentinelService::RecordEvent(EventItem &event_item)

@@ -48,17 +48,9 @@ static std::string base64_encode(const uint8_t *data, size_t length)
 	return result;
 }
 
-static std::string render_html_template(const std::string &template_file, alert &al)
+static std::string render_html_template(const std::string &template_content, alert &al)
 {
-	std::ifstream file(template_file);
-	if (!file.is_open())
-	{
-		return "";
-	}
-
-	std::stringstream buffer;
-	buffer << file.rdbuf();
-	std::string html_content = buffer.str();
+	std::string template_copy = template_content;
 
 	std::map<std::string, std::string> replacements;
 	replacements["bg_color"] = INFO_COLOR;
@@ -90,14 +82,14 @@ static std::string render_html_template(const std::string &template_file, alert 
 		std::string placeholder = "{{" + pair.first + "}}";
 		size_t pos = 0;
 
-		while ((pos = html_content.find(placeholder, pos)) != std::string::npos)
+		while ((pos = template_copy.find(placeholder, pos)) != std::string::npos)
 		{
-			html_content.replace(pos, placeholder.length(), pair.second);
+			template_copy.replace(pos, placeholder.length(), pair.second);
 			pos += pair.second.length();
 		}
 	}
 
-	return html_content;
+	return template_copy;
 }
 
 static std::string name_address(const std::string &name, const std::string &address)
@@ -150,6 +142,19 @@ void EmailService::LoadConfig(boost::property_tree::ptree const &params)
 	config_.receiver_address = params.get<std::string>("receiver_address");
 	config_.receiver_name = params.get<std::string>("receiver_name");
 	config_.template_file = params.get<std::string>("template_file");
+
+	loadTemplate();
+}
+
+void EmailService::loadTemplate()
+{
+	std::ifstream file(config_.template_file);
+	if (!file.is_open())
+		throw std::runtime_error("Failed to load template file");
+
+	std::stringstream buffer;
+	buffer << file.rdbuf();
+	html_template_str_ = buffer.str();
 }
 
 void EmailService::SendAlert(alert al)
@@ -162,7 +167,7 @@ void EmailService::SendAlert(alert al)
 	upload_ctx.payload = NULL;
 	upload_ctx.bytes_read = 0;
 
-	std::string html_content = render_html_template(config_.template_file, al);
+	std::string html_content = render_html_template(html_template_str_, al);
 	std::string payload = build_payload(html_content, config_.sender_name, config_.sender_address,
 										config_.receiver_name, config_.receiver_address);
 	upload_ctx.payload = &payload;

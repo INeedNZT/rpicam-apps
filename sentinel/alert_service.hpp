@@ -42,5 +42,8 @@ public:
 
 private:
 	EmailConfig config_;
+	std::string html_template_str_;
+
+	void loadTemplate();
 };
 #endif

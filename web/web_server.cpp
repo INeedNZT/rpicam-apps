@@ -133,9 +133,7 @@ public:
 	void Start() override
 	{
 		if (running_)
-		{
 			return;
-		}
 
 		std::string url = host_ + ":" + std::to_string(port_);
 		mg_http_listen(&mgr_, url.c_str(), eventHandler, this);
@@ -150,9 +148,7 @@ public:
 	void Stop() override
 	{
 		if (!running_)
-		{
 			return;
-		}
 
 		running_ = false;
 

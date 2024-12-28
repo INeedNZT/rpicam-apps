@@ -207,9 +207,10 @@ static void event_loop(RPiCamSurvApp &app)
 
 int main(int argc, char *argv[])
 {
+	// Exclude app in case try catch not working
+	RPiCamSurvApp app;
 	try
 	{
-		RPiCamSurvApp app;
 		SurvOptions *options = app.GetOptions();
 		if (options->Parse(argc, argv))
 		{

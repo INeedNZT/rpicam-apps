@@ -15,9 +15,7 @@
 void SentinelService::Start()
 {
 	if (running_)
-	{
 		return;
-	}
 
 	loadAlertConfig();
 
@@ -31,9 +29,7 @@ void SentinelService::Start()
 void SentinelService::Stop()
 {
 	if (!running_)
-	{
 		return;
-	}
 
 	running_ = false;
 
@@ -50,85 +46,92 @@ void SentinelService::run()
 {
 	while (running_)
 	{
-		std::unique_lock<std::mutex> lock(mutex_);
-		cv_.wait(lock, [this] { return !event_item_queue_.empty(); });
-
-		EventItem item = std::move(event_item_queue_.front());
-		event_item_queue_.pop();
-
-		CompletedRequestPtr completed_request = item.completed_request;
-		StreamInfo stream_info = app_->GetStreamInfo(item.stream);
-		FrameBuffer *buffer = completed_request->buffers[item.stream];
-		BufferReadSync r(app_, buffer);
-		libcamera::Span<uint8_t> span = r.Get()[0];
-
-		auto ts = completed_request->metadata.get(controls::SensorTimestamp);
-		int64_t timestamp_us = ts ? *ts : buffer->metadata().timestamp;
-		timestamp_us /= 1000;
-
-		if (time_offset_ == 0)
-			time_offset_ = timestamp_us;
-
-		if (!item.motion_detected && (item.detected_boxes.empty() || item.scores.empty()))
-			continue;
-
-		// An event is happening, start recording the timestamp
-		if (event_start_time_ == 0)
-			event_start_time_ = timestamp_us;
-
-		frame_copy_.assign(span.data(), span.data() + span.size());
-
-		if (event_start_time_ == timestamp_us || completed_request->sequence % event_save_rate_ == 0)
+		try
 		{
-			logEvent(item.motion_detected, item.detected_boxes, item.scores, timestamp_us);
-			std::shared_ptr<uint8_t[]> jpeg_buffer_ptr;
-			size_t jpeg_buffer_size = 0;
-			saveSnapshot(item.motion_detected, item.detected_boxes, item.scores, timestamp_us, stream_info,
-						 jpeg_buffer_ptr, jpeg_buffer_size);
-#if LIBCURL_PRESENT
-			if (event_start_time_ == timestamp_us || event_notif_flag_ == WARNING_SENDED)
+			std::unique_lock<std::mutex> lock(mutex_);
+			cv_.wait(lock, [this] { return !event_item_queue_.empty(); });
+
+			EventItem item = std::move(event_item_queue_.front());
+			event_item_queue_.pop();
+
+			CompletedRequestPtr completed_request = item.completed_request;
+			StreamInfo stream_info = app_->GetStreamInfo(item.stream);
+			FrameBuffer *buffer = completed_request->buffers[item.stream];
+			BufferReadSync r(app_, buffer);
+			libcamera::Span<uint8_t> span = r.Get()[0];
+
+			auto ts = completed_request->metadata.get(controls::SensorTimestamp);
+			int64_t timestamp_us = ts ? *ts : buffer->metadata().timestamp;
+			timestamp_us /= 1000;
+
+			if (time_offset_ == 0)
+				time_offset_ = timestamp_us;
+
+			if (!item.motion_detected && (item.detected_boxes.empty() || item.scores.empty()))
+				continue;
+
+			// An event is happening, start recording the timestamp
+			if (event_start_time_ == 0)
+				event_start_time_ = timestamp_us;
+
+			frame_copy_.assign(span.data(), span.data() + span.size());
+
+			if (event_start_time_ == timestamp_us || completed_request->sequence % event_save_rate_ == 0)
 			{
-				alert al;
-				al.type = alert_type::None;
+				logEvent(item.motion_detected, item.detected_boxes, item.scores, timestamp_us);
+				std::shared_ptr<uint8_t[]> jpeg_buffer_ptr;
+				size_t jpeg_buffer_size = 0;
+				saveSnapshot(item.motion_detected, item.detected_boxes, item.scores, timestamp_us, stream_info,
+							 jpeg_buffer_ptr, jpeg_buffer_size);
+#if LIBCURL_PRESENT
+				if (event_start_time_ == timestamp_us || event_notif_flag_ == WARNING_SENDED)
+				{
+					alert al;
+					al.type = alert_type::None;
 
-				if (item.motion_detected)
-					al.type = alert_type::Motion;
-				if (item.detected_boxes.size() && item.scores.size())
-					al.type = alert_type::FaceRecognition;
+					if (item.motion_detected)
+						al.type = alert_type::Motion;
+					if (item.detected_boxes.size() && item.scores.size())
+						al.type = alert_type::FaceRecognition;
 
-				if (event_notif_flag_ == WARNING_SENDED && al.type != alert_type::FaceRecognition)
-					continue;
+					if (event_notif_flag_ == WARNING_SENDED && al.type != alert_type::FaceRecognition)
+						continue;
 
-				std::string date_format = app_->GetOptions()->footage_date_format;
-				std::string time_format = app_->GetOptions()->playlist_time_format;
-				int64_t sys_timestamp = SurvOptions::GetSysTimestamp(event_start_time_ - time_offset_);
-				time_t sys_time_sec = static_cast<time_t>(sys_timestamp / 1000000);
-				al.time_str = SurvOptions::ToTimeStr(sys_time_sec, date_format) + " " +
-							  SurvOptions::ToTimeStr(sys_time_sec, time_format);
-				al.jpeg_buffer_ptr = jpeg_buffer_ptr;
-				al.jpeg_buffer_size = jpeg_buffer_size;
-				email_service_.SendAlert(al);
+					std::string date_format = app_->GetOptions()->footage_date_format;
+					std::string time_format = app_->GetOptions()->playlist_time_format;
+					int64_t sys_timestamp = SurvOptions::GetSysTimestamp(event_start_time_ - time_offset_);
+					time_t sys_time_sec = static_cast<time_t>(sys_timestamp / 1000000);
+					al.time_str = SurvOptions::ToTimeStr(sys_time_sec, date_format) + " " +
+								  SurvOptions::ToTimeStr(sys_time_sec, time_format);
+					al.jpeg_buffer_ptr = jpeg_buffer_ptr;
+					al.jpeg_buffer_size = jpeg_buffer_size;
+					email_service_.SendAlert(al);
 
-				if (al.type == alert_type::Motion)
-					event_notif_flag_ = WARNING_SENDED;
-				if (al.type == alert_type::FaceRecognition)
-					event_notif_flag_ = DANGER_SENDED;
-			}
+					if (al.type == alert_type::Motion)
+						event_notif_flag_ = WARNING_SENDED;
+					if (al.type == alert_type::FaceRecognition)
+						event_notif_flag_ = DANGER_SENDED;
+				}
 #endif
-		}
+			}
 
-		if (timestamp_us - event_start_time_ >= event_interval_sec_ * 1000000)
-		{
-			// End event and clear resource
-			event_dir_.clear();
-			log_file_.close();
-			event_start_time_ = 0;
-			event_notif_flag_ = 0;
+			if (timestamp_us - event_start_time_ >= event_interval_sec_ * 1000000)
+			{
+				// End event and clear resource
+				event_dir_.clear();
+				log_file_.close();
+				event_start_time_ = 0;
+				event_notif_flag_ = 0;
+			}
+			else if (event_start_time_ != 0)
+			{
+				// Extend time if there is an event
+				event_start_time_ = timestamp_us;
+			}
 		}
-		else if (event_start_time_ != 0)
+		catch (const std::exception &e)
 		{
-			// Extend time if there is an event
-			event_start_time_ = timestamp_us;
+			LOG_ERROR("Sentinel Error: *** " << e.what() << " ***");
 		}
 	}
 }

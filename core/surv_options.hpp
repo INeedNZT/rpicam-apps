@@ -46,7 +46,9 @@ struct SurvOptions : public VideoOptions
 			"save-rate", value<unsigned int>(&save_rate)->default_value(30),
 			"Set the frame rate for saving an event, including log and snapshot image.")(
 			"alert-config-file", value<std::string>(&alert_config_file),
-			"Set the file name for configuring the security alert.")
+			"Set the file name for configuring the security alert.")(
+			"retention-cycle", value<unsigned int>(&retention_cycle)->default_value(3),
+			"Set the retention cycle in days for storage.")
 			;
 	}
 
@@ -66,6 +68,8 @@ struct SurvOptions : public VideoOptions
 	unsigned int save_rate;
 
 	std::string alert_config_file;
+
+	unsigned int retention_cycle;
 
 	static int64_t sys_start_timestamp;
 
@@ -106,5 +110,7 @@ struct SurvOptions : public VideoOptions
 		std::cerr << "    event-directory: " << event_directory << std::endl;
 		std::cerr << "    event-interval: " << event_interval << std::endl;
 		std::cerr << "    save-rate: " << save_rate << std::endl;
+		std::cerr << "    alert-config-file: " << alert_config_file << std::endl;
+		std::cerr << "    retention-cycle: " << retention_cycle << std::endl;
 	}
 };

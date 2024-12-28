@@ -1,4 +1,5 @@
 #include <chrono>
+#include <filesystem>
 #include <poll.h>
 #include <signal.h>
 #include <sys/signalfd.h>
@@ -18,7 +19,10 @@ using namespace std::placeholders;
 class RPiCamSurvApp : public RPiCamEncoder<SurvOptions>
 {
 public:
-	RPiCamSurvApp() : RPiCamEncoder<SurvOptions>(), web_server_(nullptr), sentinel_service_(nullptr) {}
+	RPiCamSurvApp()
+		: RPiCamEncoder<SurvOptions>(), web_server_(nullptr), sentinel_service_(nullptr), cleaner_running_(false)
+	{
+	}
 
 	void StartWebServer()
 	{
@@ -76,9 +80,78 @@ public:
 		sentinel_service_->RecordEvent(item);
 	}
 
+	void StartDiskCleaner()
+	{
+		cleaner_running_ = true;
+		disk_cleaner_thread_ = std::thread(&RPiCamSurvApp::cleanupCycle, this);
+	}
+
+	void StopDiskCleaner()
+	{
+		cleaner_running_ = false;
+		disk_cleaner_thread_.join();
+	}
+
 private:
 	std::unique_ptr<WebServer> web_server_;
 	std::unique_ptr<SentinelService> sentinel_service_;
+	std::thread disk_cleaner_thread_;
+	bool cleaner_running_;
+
+	void cleanupCycle()
+	{
+		SurvOptions const *options = static_cast<SurvOptions *>(options_.get());
+		unsigned int days = options->retention_cycle;
+		std::string event_directory = options->event_directory;
+		std::string footage_directory = options->footage_directory;
+
+		while (cleaner_running_)
+		{
+			try
+			{
+				auto now = std::chrono::system_clock::now();
+				auto now_time_t = std::chrono::system_clock::to_time_t(now);
+				std::tm tm_now = *std::localtime(&now_time_t);
+
+				tm_now.tm_hour = 0;
+				tm_now.tm_min = 0;
+				tm_now.tm_sec = 0;
+				tm_now.tm_mday += 1;
+				auto midnight_timestamp = std::mktime(&tm_now);
+
+				tm_now.tm_mday -= (days);
+				std::time_t retention_timestamp = std::mktime(&tm_now);
+
+				auto midnight_time_point = std::chrono::system_clock::from_time_t(midnight_timestamp);
+				auto diff_seconds = std::chrono::duration_cast<std::chrono::seconds>(midnight_time_point - now).count();
+
+				if (diff_seconds > 0)
+					std::this_thread::sleep_for(std::chrono::seconds(diff_seconds));
+
+				for (const auto &dir : { event_directory, footage_directory })
+				{
+					for (const auto &entry : std::filesystem::directory_iterator(dir))
+					{
+						std::string folder_name = entry.path().filename().string();
+						size_t pos = folder_name.find('_');
+						if (pos != std::string::npos)
+							folder_name.erase(pos);
+
+						std::time_t folder_timestamp = static_cast<time_t>(std::stoll(folder_name));
+						if (folder_timestamp < retention_timestamp)
+						{
+							LOG(1, "Periodically cleanup folders " << entry);
+							std::filesystem::remove_all(entry.path());
+						}
+					}
+				}
+			}
+			catch (const std::exception &e)
+			{
+				LOG_ERROR("Disk Cleaner Error: *** " << e.what() << " ***");
+			}
+		}
+	}
 };
 
 static int signal_received;
@@ -140,15 +213,17 @@ static void event_loop(RPiCamSurvApp &app)
 	app.SetEncodeOutputReadyCallback(encode_output_ready_callback);
 	app.SetMetadataReadyCallback(std::bind(&Output::MetadataReady, output.get(), _1));
 
-	// Start web server and surveillance recorder thread
-	app.StartWebServer();
-	// Start event logger and risk alert thread
-	app.StartSentinel();
-
 	app.OpenCamera();
 	app.ConfigureVideo(get_colourspace_flags(options->codec));
 	app.StartEncoder();
 	app.StartCamera();
+
+	// Start web server and surveillance recorder thread
+	app.StartWebServer();
+	// Start event logger and risk alert thread
+	app.StartSentinel();
+	// Start disk cleaner for periodic disk space release
+	app.StartDiskCleaner();
 
 	SurvOptions::sys_start_timestamp =
 		std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())

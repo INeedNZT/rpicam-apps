@@ -34,13 +34,21 @@
       .card:not(:last-child) {
         margin-bottom: 1.25rem;
       }
+
+      .body {
+        display: flex !important;
+      }
+
+      .container-lg {
+        position: relative !important;
+      }
     </style>
   </head>
   <body>
     <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
       <div class="sidebar-header border-bottom">
         <div class="sidebar-brand d-flex align-items-start"><img class="sidebar-brand-full" height="32" alt="Logo" src="assets/brand/logo.svg"><span class="mt-1">Rpicam-Surveillance</span></div>
-        <button class="btn-close d-lg-none" type="button" data-coreui-dismiss="offcanvas" data-coreui-theme="dark" aria-label="Close" onclick="coreui.Sidebar.getInstance(document.querySelector(&quot;#sidebar&quot;)).toggle()"></button>
+        <button class="btn-close d-lg-none" type="button" data-coreui-theme="dark" aria-label="Close" onclick="coreui.Sidebar.getInstance(document.querySelector(&quot;#sidebar&quot;)).toggle()"></button>
       </div>
       <ul class="sidebar-nav" data-coreui="navigation" data-simplebar="">
         <li class="nav-item"><a class="nav-link" href="index.html">
@@ -138,6 +146,7 @@
               </div>
             </div>
           </div>
+          <div id="alert-container"></div>
         </div>
       </div>
       <footer class="footer px-4">

@@ -1,4 +1,20 @@
 (() => {
+  const errorAlert = msg => {
+    const alertPlaceholder = document.getElementById('alert-container');
+    const appendAlert = (message, type) => {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = [`<div class="alert alert-${type} alert-dismissible fade" role="alert">`, `   <div>${message}</div>`, '</div>'].join('');
+      const al = new coreui.Alert(wrapper);
+      alertPlaceholder.append(wrapper);
+      setTimeout(() => {
+        wrapper.firstElementChild.classList.add('show');
+      }, 50);
+      setTimeout(() => {
+        al.close();
+      }, 5000);
+    };
+    appendAlert(msg, 'danger');
+  };
   const requestEventLogs = event => {
     const logContainer = event.target.querySelector('.log-container');
     const event_id = event.target.parentNode.dataset.id;

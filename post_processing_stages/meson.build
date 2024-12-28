@@ -108,6 +108,16 @@ if tflite_enable.enabled()
     enable_tflite = true
 endif
 
+if get_option('download_ulfd_model')
+    download_script = meson.project_source_root() / 'utils' / 'download-ulfd-model.sh'
+    custom_target('ulfd-model',
+                  command : [ download_script, '@OUTPUT@' ],
+                  output : 'ulfd-model',
+                  install : true,
+                  install_dir : get_option('datadir'),
+                 )
+endif
+
 # Hailo postprocessing stages.
 enable_hailo = false
 hailort_dep = dependency('HailoRT', modules : ['HailoRT::libhailort'], version: '>=4.18.0',

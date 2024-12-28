@@ -58,3 +58,8 @@ option('download_imx500_models',
         type : 'boolean',
         value : false,
         description : 'Download and install the IMX500 postprocessing models')
+
+option('download_ulfd_model',
+        type : 'boolean',
+        value : true,
+        description : 'Download and install the Ultra-lightweight face detection model')

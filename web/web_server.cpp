@@ -42,9 +42,8 @@ struct Log
 	std::string log_fname;
 	std::ofstream log_ofs;
 	bool new_line;
-	std::mutex log_mutex;
 
-	Log(const std::string &log_dir) : log_dir(log_dir), log_fname(""), new_line(true), log_mutex() {}
+	Log(const std::string &log_dir) : log_dir(log_dir), log_fname(""), new_line(true) {}
 
 	~Log()
 	{
@@ -76,8 +75,6 @@ static void log_fn(char c, void *param)
 
 	if (log->log_ofs.is_open())
 	{
-		std::lock_guard<std::mutex> guard(log->log_mutex);
-
 		if (log->new_line)
 		{
 			std::string current_time = SurvOptions::ToTimeStr(std::time(nullptr), "%H:%M:%S");
@@ -103,8 +100,7 @@ class MongooseServer : public WebServer
 {
 public:
 	MongooseServer(SurvOptions const *options)
-		: WebServer(options), streaming_(false), max_queue_size_(60), video_width_(options->width),
-		  video_height_(options->height)
+		: WebServer(options), streaming_(false), video_width_(options->width), video_height_(options->height)
 	{
 		event_dir_ = options->event_directory;
 		footage_dir_ = options->footage_directory;
@@ -155,7 +151,8 @@ public:
 		event_loop_thread_.join();
 
 		streaming_ = false;
-
+		ws_connections_.clear();
+		frame_queue_cv_.notify_one();
 		streaming_thread_.join();
 
 		mg_mgr_free(&mgr_);
@@ -164,13 +161,6 @@ public:
 	void RecvFrameData(void *mem, size_t size) override
 	{
 		FrameBufferPtr frame_ptr = std::make_shared<FrameBuffer>(mem, size);
-
-		if (frame_queue_.size() >= max_queue_size_)
-		{
-			std::lock_guard<std::mutex> lock(frame_queue_mutex_);
-			std::queue<FrameBufferPtr> empty_queue;
-			frame_queue_.swap(empty_queue);
-		}
 
 		frame_queue_.push(frame_ptr);
 		frame_queue_cv_.notify_one();
@@ -201,9 +191,7 @@ private:
 
 	// Connection pool for broadcast clients
 	std::set<mg_connection *> ws_connections_;
-	std::mutex ws_connections_mutex_;
 	std::mutex broadcast_mutex_;
-	std::condition_variable broadcast_cv_;
 
 	static inline int numconns(struct mg_mgr *mgr_)
 	{
@@ -315,19 +303,12 @@ private:
 			if (std::string(wm->data.buf) == "REQUESTSTREAM ")
 			{
 				// Add to WebSocket connection pool
-				{
-					std::lock_guard<std::mutex> lock(server->ws_connections_mutex_);
-					server->ws_connections_.insert(c);
-					server->broadcast_cv_.notify_one();
-				}
+				server->ws_connections_.insert(c);
 				MG_INFO(("User added to broadcast list"));
 			}
 			else if (std::string(wm->data.buf) == "STOPSTREAM")
 			{
-				{
-					std::lock_guard<std::mutex> lock(server->ws_connections_mutex_);
-					server->ws_connections_.erase(c);
-				}
+				server->ws_connections_.erase(c);
 				MG_INFO(("User removed from broadcast list"));
 			}
 		}
@@ -352,8 +333,8 @@ private:
 		{
 			if (c->is_websocket)
 			{
-				std::lock_guard<std::mutex> lock(server->ws_connections_mutex_);
 				server->ws_connections_.erase(c);
+				MG_INFO(("Connection closed, user removed from broadcast list"));
 			}
 		}
 	}
@@ -372,32 +353,29 @@ private:
 		{
 			FrameBufferPtr frame_ptr = nullptr;
 
-			std::unique_lock<std::mutex> lock(broadcast_mutex_);
-			broadcast_cv_.wait(lock, [this] { return !ws_connections_.empty(); });
-
 			{
 				std::unique_lock<std::mutex> frame_lock(frame_queue_mutex_);
-				frame_queue_cv_.wait(lock, [this] { return !frame_queue_.empty(); });
+				frame_queue_cv_.wait(frame_lock, [this] { return !frame_queue_.empty() || !streaming_; });
+
+				if (!streaming_)
+					break;
 
 				frame_ptr = frame_queue_.front();
 				frame_queue_.pop();
 			}
 
+			for (auto *conn : ws_connections_)
 			{
-				std::lock_guard<std::mutex> lock(ws_connections_mutex_);
-				for (auto *conn : ws_connections_)
+				if (conn->is_closing || !conn->is_websocket)
 				{
-					if (conn->is_closing || !conn->is_websocket)
-					{
-						MG_INFO(("WS is closing, skipping broadcast"));
-						continue;
-					}
+					MG_INFO(("WS is closing, skipping broadcast"));
+					continue;
+				}
 
-					if (frame_ptr)
-					{
-						auto *msg_wrapper = new MsgWrapper { frame_ptr };
-						mg_wakeup(&mgr_, conn->id, &msg_wrapper, sizeof(*msg_wrapper));
-					}
+				if (frame_ptr)
+				{
+					auto *msg_wrapper = new MsgWrapper { frame_ptr };
+					mg_wakeup(&mgr_, conn->id, &msg_wrapper, sizeof(*msg_wrapper));
 				}
 			}
 		}

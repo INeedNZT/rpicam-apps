@@ -85,6 +85,7 @@ public:
 	void StopDiskCleaner()
 	{
 		cleaner_running_ = false;
+		cv_.notify_one();
 		disk_cleaner_thread_.join();
 	}
 
@@ -92,6 +93,8 @@ private:
 	std::unique_ptr<WebServer> web_server_;
 	std::unique_ptr<SentinelService> sentinel_service_;
 	std::thread disk_cleaner_thread_;
+	std::mutex mtx_;
+	std::condition_variable cv_;
 	bool cleaner_running_;
 
 	void cleanupCycle()
@@ -122,7 +125,14 @@ private:
 				auto diff_seconds = std::chrono::duration_cast<std::chrono::seconds>(midnight_time_point - now).count();
 
 				if (diff_seconds > 0)
-					std::this_thread::sleep_for(std::chrono::seconds(diff_seconds));
+				{
+					std::unique_lock<std::mutex> lock(mtx_);
+					if (!cv_.wait_for(lock, std::chrono::seconds(diff_seconds), [this] { return !cleaner_running_; }))
+					{
+						// Not timeout, means cleaner_running_ set to false
+						break;
+					}
+				}
 
 				for (const auto &dir : { event_directory, footage_directory })
 				{

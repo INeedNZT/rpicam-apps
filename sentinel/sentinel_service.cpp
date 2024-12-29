@@ -32,6 +32,7 @@ void SentinelService::Stop()
 		return;
 
 	running_ = false;
+	cv_.notify_one();
 
 	event_loop_thread_.join();
 }
@@ -49,7 +50,10 @@ void SentinelService::run()
 		try
 		{
 			std::unique_lock<std::mutex> lock(mutex_);
-			cv_.wait(lock, [this] { return !event_item_queue_.empty(); });
+			cv_.wait(lock, [this] { return !event_item_queue_.empty() || !running_; });
+
+			if (!running_)
+				break;
 
 			EventItem item = std::move(event_item_queue_.front());
 			event_item_queue_.pop();

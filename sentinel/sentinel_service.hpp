@@ -7,8 +7,8 @@
 #include "core/completed_request.hpp"
 #include "core/rpicam_encoder.hpp"
 
-#include "core/surv_options.hpp"
 #include "alert_service.hpp"
+#include "core/surv_options.hpp"
 
 using Stream = libcamera::Stream;
 using FrameBuffer = libcamera::FrameBuffer;
@@ -18,7 +18,8 @@ struct EventItem
 	EventItem() : stream(nullptr) {}
 	EventItem(CompletedRequestPtr &b, Stream *s, bool md, const std::vector<std::vector<float>> &vdb,
 			  const std::vector<float> &vs)
-		: completed_request(b), stream(s), motion_detected(md), detected_boxes(vdb), scores(vs)
+		: completed_request(b), stream(s), motion_detected(md), detected_boxes(vdb), scores(vs), timestamp_us(0),
+		  frame_sequence(0)
 	{
 	}
 	EventItem(EventItem &&other)
@@ -28,10 +29,14 @@ struct EventItem
 		motion_detected = other.motion_detected;
 		detected_boxes = std::move(other.detected_boxes);
 		scores = std::move(other.scores);
+		timestamp_us = other.timestamp_us;
+		frame_sequence = other.frame_sequence;
 		other.stream = nullptr;
 		other.motion_detected = false;
 		other.detected_boxes.clear();
 		other.scores.clear();
+		other.timestamp_us = 0;
+		other.frame_sequence = 0;
 	}
 	EventItem &operator=(EventItem &&other)
 	{
@@ -40,10 +45,14 @@ struct EventItem
 		motion_detected = other.motion_detected;
 		detected_boxes = std::move(other.detected_boxes);
 		scores = std::move(other.scores);
+		timestamp_us = other.timestamp_us;
+		frame_sequence = other.frame_sequence;
 		other.stream = nullptr;
 		other.motion_detected = false;
 		other.detected_boxes.clear();
 		other.scores.clear();
+		other.timestamp_us = 0;
+		other.frame_sequence = 0;
 		return *this;
 	}
 	CompletedRequestPtr completed_request;
@@ -51,6 +60,8 @@ struct EventItem
 	bool motion_detected;
 	std::vector<std::vector<float>> detected_boxes;
 	std::vector<float> scores;
+	int64_t timestamp_us;
+	unsigned int frame_sequence;
 };
 
 class SentinelService

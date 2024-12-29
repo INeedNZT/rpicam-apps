@@ -39,6 +39,20 @@ void SentinelService::Stop()
 
 void SentinelService::RecordEvent(EventItem &event_item)
 {
+	CompletedRequestPtr completed_request = event_item.completed_request;
+	FrameBuffer *buffer = completed_request->buffers[event_item.stream];
+	BufferReadSync r(app_, buffer);
+	libcamera::Span<uint8_t> span = r.Get()[0];
+
+	// Cache frame buffer and release completedRequestPtr, DO NOT block the video stream
+	frame_copy_.assign(span.data(), span.data() + span.size());
+	event_item.frame_sequence = completed_request->sequence;
+	event_item.completed_request.reset();
+
+	auto ts = completed_request->metadata.get(controls::SensorTimestamp);
+	int64_t timestamp_ns = ts ? *ts : buffer->metadata().timestamp;
+	event_item.timestamp_us = timestamp_ns / 1000;
+
 	event_item_queue_.push(std::move(event_item));
 	cv_.notify_one();
 }
@@ -58,37 +72,26 @@ void SentinelService::run()
 			EventItem item = std::move(event_item_queue_.front());
 			event_item_queue_.pop();
 
-			CompletedRequestPtr completed_request = item.completed_request;
-			StreamInfo stream_info = app_->GetStreamInfo(item.stream);
-			FrameBuffer *buffer = completed_request->buffers[item.stream];
-			BufferReadSync r(app_, buffer);
-			libcamera::Span<uint8_t> span = r.Get()[0];
-
-			auto ts = completed_request->metadata.get(controls::SensorTimestamp);
-			int64_t timestamp_us = ts ? *ts : buffer->metadata().timestamp;
-			timestamp_us /= 1000;
-
 			if (time_offset_ == 0)
-				time_offset_ = timestamp_us;
+				time_offset_ = item.timestamp_us;
 
 			if (!item.motion_detected && (item.detected_boxes.empty() || item.scores.empty()))
 				continue;
 
 			// An event is happening, start recording the timestamp
 			if (event_start_time_ == 0)
-				event_start_time_ = timestamp_us;
+				event_start_time_ = item.timestamp_us;
 
-			frame_copy_.assign(span.data(), span.data() + span.size());
-
-			if (event_start_time_ == timestamp_us || completed_request->sequence % event_save_rate_ == 0)
+			if (event_start_time_ == item.timestamp_us || item.frame_sequence % event_save_rate_ == 0)
 			{
-				logEvent(item.motion_detected, item.detected_boxes, item.scores, timestamp_us);
+				logEvent(item.motion_detected, item.detected_boxes, item.scores, item.timestamp_us);
+				StreamInfo stream_info = app_->GetStreamInfo(item.stream);
 				std::shared_ptr<uint8_t[]> jpeg_buffer_ptr;
 				size_t jpeg_buffer_size = 0;
-				saveSnapshot(item.motion_detected, item.detected_boxes, item.scores, timestamp_us, stream_info,
+				saveSnapshot(item.motion_detected, item.detected_boxes, item.scores, item.timestamp_us, stream_info,
 							 jpeg_buffer_ptr, jpeg_buffer_size);
 #if LIBCURL_PRESENT
-				if (event_start_time_ == timestamp_us || event_notif_flag_ == WARNING_SENDED)
+				if (event_start_time_ == item.timestamp_us || event_notif_flag_ == WARNING_SENDED)
 				{
 					alert al;
 					al.type = alert_type::None;
@@ -119,7 +122,7 @@ void SentinelService::run()
 #endif
 			}
 
-			if (timestamp_us - event_start_time_ >= event_interval_sec_ * 1000000)
+			if (item.timestamp_us - event_start_time_ >= event_interval_sec_ * 1000000)
 			{
 				// End event and clear resource
 				event_dir_.clear();
@@ -130,7 +133,7 @@ void SentinelService::run()
 			else if (event_start_time_ != 0)
 			{
 				// Extend time if there is an event
-				event_start_time_ = timestamp_us;
+				event_start_time_ = item.timestamp_us;
 			}
 		}
 		catch (const std::exception &e)

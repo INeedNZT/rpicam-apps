@@ -15,12 +15,16 @@ if libcurl_dep.found()
     cpp_arguments += '-DLIBCURL_PRESENT=1'
     enable_libcurl = true
 
-    assets_dir = meson.project_source_root() / 'assets' / 'email'
-    email_assets = files([
-        assets_dir / 'alert.html'
+    assets_dir = meson.project_source_root() / 'assets'
+    alert_assets = files([
+        assets_dir / 'alert_config.json'
     ])
-    install_data(email_assets,
-             install_dir : get_option('datadir') / 'email-assets')
+    install_data(alert_assets, install_dir : get_option('datadir') / 'rpi-camera-assets')
+
+    email_assets = files([
+        assets_dir / 'email' / 'alert.html'
+    ])
+    install_data(email_assets, install_dir : get_option('datadir') / 'email-assets')
 endif
 
 install_headers(sentinel_headers, subdir: meson.project_name() / 'sentinel')

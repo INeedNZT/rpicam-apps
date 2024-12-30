@@ -230,7 +230,6 @@ static void event_loop(RPiCamSurvApp &app)
 
 		app.InvokeSentinel(completed_request, app.LoresStream());
 		app.EncodeBuffer(completed_request, app.VideoStream());
-		app.ShowPreview(completed_request, app.VideoStream());
 	}
 }
 

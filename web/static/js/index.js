@@ -17,8 +17,6 @@ ww.onmessage = e => {
   const msg = e.data;
   switch (msg.cmd) {
     case 'canvasReady':
-      canvas.style.width = `${msg.width}px`;
-      canvas.style.height = `${msg.height}px`;
       canvas.dataset.play = 'true';
       ww.postMessage({
         cmd: 'play'

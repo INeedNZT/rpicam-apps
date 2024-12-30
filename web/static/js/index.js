@@ -1,5 +1,6 @@
 const canvas = document.createElement('canvas');
-document.body.getElementsByClassName('canvas-container')[0].append(canvas);
+const container = document.body.getElementsByClassName('canvas-container')[0];
+container.append(canvas);
 
 // Create h264 player
 const uri = `ws://${document.location.host}/live`;
@@ -17,6 +18,7 @@ ww.onmessage = e => {
   const msg = e.data;
   switch (msg.cmd) {
     case 'canvasReady':
+      canvas.style.maxHeight = `${container.offsetHeight}px`;
       canvas.dataset.play = 'true';
       ww.postMessage({
         cmd: 'play'

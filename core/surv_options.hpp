@@ -43,7 +43,7 @@ struct SurvOptions : public VideoOptions
 			"event-directory",
 			value<std::string>(&event_directory)->default_value(std::string(home_directory) + "/events"),
 			"Path to store the security event logs and snapshots.")(
-			"event-interval", value<unsigned int>(&event_interval)->default_value(30),
+			"event-interval", value<unsigned int>(&event_interval)->default_value(300),
 			"Set the time interval in seconds between events before the next event check.")(
 			"save-rate", value<unsigned int>(&save_rate)->default_value(30),
 			"Set the frame rate for saving an event, including log and snapshot image.")(

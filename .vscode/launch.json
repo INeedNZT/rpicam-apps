@@ -13,8 +13,9 @@
                 "--profile", "baseline",
                 "--post-process-file", "assets/surveillance.json",
                 "--alert-config-file", "assets/alert_config.json",
-                "--info-text", "",
-                "--autofocus-mode", "manual"
+                "--autofocus-mode", "manual",
+                "--width", "1632",
+                "--height", "1224"
             ],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "compile&install",

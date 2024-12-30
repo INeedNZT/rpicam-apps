@@ -5,6 +5,8 @@
 #include "video_options.hpp"
 
 #define THUMB_NAME "thumbnail.jpg"
+#define THUMB_WIDTH 640
+#define THUMB_HEIGHT 480
 #define PLAYLIST_NAME "playlist.m3u8"
 #define FOOTAGE_PREFIX "/footage"
 #define EVENT_PREFIX "/events"

@@ -216,13 +216,12 @@ void SurvOutput::saveThumbnail(void *mem, size_t size, int64_t timestamp_us, con
 	avcodec_receive_frame(codec_ctx, frame);
 
 	AVFrame *rgb_frame = av_frame_alloc();
-	int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, frame->width, frame->height, 1);
+	int num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, THUMB_WIDTH, THUMB_HEIGHT, 1);
 	uint8_t *buffer = (uint8_t *)av_malloc(num_bytes);
-	av_image_fill_arrays(rgb_frame->data, rgb_frame->linesize, buffer, AV_PIX_FMT_RGB24, frame->width, frame->height,
-						 1);
+	av_image_fill_arrays(rgb_frame->data, rgb_frame->linesize, buffer, AV_PIX_FMT_RGB24, THUMB_WIDTH, THUMB_HEIGHT, 1);
 
-	struct SwsContext *sws_ctx = sws_getContext(frame->width, frame->height, codec_ctx->pix_fmt, frame->width,
-												frame->height, AV_PIX_FMT_RGB24, 0, nullptr, nullptr, nullptr);
+	struct SwsContext *sws_ctx = sws_getContext(frame->width, frame->height, codec_ctx->pix_fmt, THUMB_WIDTH,
+												THUMB_HEIGHT, AV_PIX_FMT_RGB24, 0, nullptr, nullptr, nullptr);
 	sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, rgb_frame->data, rgb_frame->linesize);
 
 	FILE *jpeg_file = fopen(save_path.c_str(), "wb");
@@ -235,8 +234,8 @@ void SurvOutput::saveThumbnail(void *mem, size_t size, int64_t timestamp_us, con
 	jpeg_create_compress(&cinfo);
 	jpeg_stdio_dest(&cinfo, jpeg_file);
 
-	cinfo.image_width = frame->width;
-	cinfo.image_height = frame->height;
+	cinfo.image_width = THUMB_WIDTH;
+	cinfo.image_height = THUMB_HEIGHT;
 	cinfo.input_components = 3;
 	cinfo.in_color_space = JCS_RGB;
 	jpeg_set_defaults(&cinfo);
@@ -246,7 +245,7 @@ void SurvOutput::saveThumbnail(void *mem, size_t size, int64_t timestamp_us, con
 
 	JSAMPROW row_pointer[1];
 
-	for (int y = 0; y < frame->height; y++)
+	for (int y = 0; y < THUMB_HEIGHT; y++)
 	{
 		row_pointer[0] = &rgb_frame->data[0][y * rgb_frame->linesize[0]];
 		jpeg_write_scanlines(&cinfo, row_pointer, 1);
@@ -262,7 +261,7 @@ void SurvOutput::saveThumbnail(void *mem, size_t size, int64_t timestamp_us, con
 	av_frame_free(&frame);
 	avcodec_free_context(&codec_ctx);
 	sws_freeContext(sws_ctx);
-	av_free(buffer);
+	av_freep(&buffer);
 }
 
 Output *SurvOutput::Create(SurvOptions const *options)

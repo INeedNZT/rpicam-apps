@@ -10,12 +10,13 @@
                 "-t", "0",
                 "-r", "--inline",
                 "--web-host", "0.0.0.0",
+                "--web-port", "8000",
                 "--profile", "baseline",
                 "--post-process-file", "assets/surveillance.json",
                 "--alert-config-file", "assets/alert_config.json",
                 "--autofocus-mode", "manual",
-                "--width", "1632",
-                "--height", "1224"
+                "--width", "640",
+                "--height", "480"
             ],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "compile&install",
@@ -24,12 +25,12 @@
             "MIMode": "gdb",
             "setupCommands": [
                 {
-                    "description": "为 gdb 启用整齐打印",
+                    "description": "pretty printing for gdb",
                     "text": "-enable-pretty-printing",
                     "ignoreFailures": true
                 },
                 {
-                    "description": "将反汇编风格设置为 Intel",
+                    "description": "disassembly-flavor Intel",
                     "text": "-gdb-set disassembly-flavor intel",
                     "ignoreFailures": true
                 }

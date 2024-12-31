@@ -48,7 +48,7 @@
             "label": "setup",
             "type": "shell",
             "dependsOn":["clean"],
-            "command": "meson setup build -Denable_libav=enabled -Denable_drm=enabled -Denable_egl=enabled -Denable_qt=enabled -Denable_opencv=disabled -Denable_tflite=enabled -Denable_hailo=disabled",
+            "command": "meson setup build -Denable_libav=enabled -Denable_drm=enabled -Denable_egl=disabled -Denable_qt=disabled -Denable_opencv=disabled -Denable_tflite=enabled -Denable_hailo=disabled",
         }
     ]
 }

@@ -40,7 +40,7 @@ Description=Rpicam Surveillance Service
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c "$INSTALL_DIR/rpicam-surv $(cat $CONFIG_DIR/env.conf | grep -E '^[^#]' | tr '\n' ' ') >> $INSTALL_DIR/surv-$(date +\%Y-\%m-\%d).log 2>&1"
+ExecStart=/bin/bash -c "echo '--- Start: $(date '+%Y-%m-%d %H:%M:%S') ---' >> $INSTALL_DIR/surv-$(date +%Y-%m-%d_%H%M%S).log && $INSTALL_DIR/rpicam-surv $(cat $CONFIG_DIR/env.conf | grep -E '^[^#]' | tr '\n' ' ') >> $INSTALL_DIR/surv-$(date +%Y-%m-%d_%H%M%S).log 2>&1"
 WorkingDirectory=$INSTALL_DIR
 Restart=always
 User=$(whoami)

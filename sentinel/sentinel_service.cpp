@@ -355,8 +355,8 @@ void SentinelService::loadAlertConfig()
 	{
 		if (key_and_value.first == "email_service")
 		{
-			boost::property_tree::ptree const &email_params = key_and_value.second;
 #if LIBCURL_PRESENT
+			boost::property_tree::ptree const &email_params = key_and_value.second;
 			email_service_.LoadConfig(email_params);
 #endif
 		}

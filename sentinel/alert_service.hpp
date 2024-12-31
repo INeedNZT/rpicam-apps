@@ -1,4 +1,6 @@
+#if LIBCURL_PRESENT
 #include <curl/curl.h>
+#endif
 #include <memory>
 #include <string>
 

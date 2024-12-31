@@ -70,7 +70,7 @@ static float computeIOU(const std::vector<float> &box1, const std::vector<float>
 
 bool FaceDetectTfSurvStage::Process(CompletedRequestPtr &completed_request)
 {
-	bool motion_detected;
+	bool motion_detected = false;
 	completed_request->post_process_metadata.Get("motion_detect.result", motion_detected);
 
 	if (!motion_detected)

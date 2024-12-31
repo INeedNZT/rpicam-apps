@@ -44,8 +44,8 @@ def control_fan():
             GPIO.output(FAN_GPIO, GPIO.LOW)
             fan_on = False
 
-        # Check temp every 5 seconds
-        time.sleep(5)
+        # Check temp every 10 seconds
+        time.sleep(10)
 
 
 if __name__ == "__main__":

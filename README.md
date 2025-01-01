@@ -6,11 +6,11 @@ A ligthweight surveillance program based on `rpicam-apps`, with a simple web int
 
 Screenshot of web backend:
 
-<img src="screenshot/backend_screenshot.jpg" style="max-width: 80%;" />
+<img src="screenshot/backend_screenshot.jpg" width="100%" />
 
 Screenshot of email:
 
-<img src="screenshot/email_screenshot.png" style="max-width: 50%;" />
+<img src="screenshot/email_screenshot.png" width="60%" />
 
 ## Motivation
 

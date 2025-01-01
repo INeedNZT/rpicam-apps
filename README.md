@@ -130,7 +130,7 @@ Access the web backend by visiting `web_host:8000`.
 
 - Configure the `alert_config.json` in `/usr/local/share/rpi-camera-assets` to ensure the email alert works properly.
 
-- Events, surveillance footage, and web server logs are stored in the `/home/[user]` directory, while the program's logs are located in `/opt/rpicam-surv`.
+- Events, surveillance footage, and web server logs are stored in the `HOME` directory, while the program's logs are located in `/opt/rpicam-surv`.
 
 - For more configurable parameters, refer to [`core/surv_options.hpp`](https://github.com/INeedNZT/rpicam-apps/blob/surveillance/core/surv_options.hpp)
 

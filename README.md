@@ -1,6 +1,16 @@
-# Rpicam-Surveillance
+# <img src="assets/email/logo.svg" align="top" width="40" /> Rpicam-Surveillance
+
+
 
 A ligthweight surveillance program based on `rpicam-apps`, with a simple web interface and security alerts.
+
+Screenshot of web backend:
+
+<img src="screenshot/backend_screenshot.jpg" style="max-width: 80%;" />
+
+Screenshot of email:
+
+<img src="screenshot/email_screenshot.png" style="max-width: 50%;" />
 
 ## Motivation
 

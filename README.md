@@ -2,23 +2,23 @@
 
 
 
-A ligthweight surveillance program based on `rpicam-apps`, with a simple web interface and security alerts.
+A ligthweight surveillance system based on [`rpicam-apps`](https://github.com/raspberrypi/rpicam-apps), with a simple web interface and security alerts.
 
-Screenshot of web backend:
+Screenshot of Web Interface:
 
 <img src="screenshot/backend_screenshot.jpg" width="100%" />
 
-Screenshot of email:
+Screenshot of Email Notification:
 
 <img src="screenshot/email_screenshot.png" width="60%" />
 
 ## Motivation
 
-[rpicam-apps](https://github.com/raspberrypi/rpicam-apps) is a Raspberry Pi camera program that provides a good start for building advanced camera applications. It also demonstrates the use of TensorFlow Lite (TFLite) for loading models to perform vision tasks. [Ultra-lightweight face detection model](https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB) provides a pre-trained TFLite model and achieves real-time face detection performance on embedded devices. Raspberry Pi 3 and 4 come equipped with powerful H.264 hardware encoders, and project like [h264-live-player](https://github.com/131/h264-live-player) make it possible to decode and play raw H.264 real-time video streams directly in a web browser. This project also integrates [mongoose](https://github.com/cesanta/mongoose), a lightweight web server, to provide WebSocket and HTTP access services. It uses [videojs](https://videojs.com) to play recorded videos and `libcurl` to send email alerts. With the conveniences provided by these projects, creating a lightweight home surveillance camera system with web interface becomes significantly easier.
+[rpicam-apps](https://github.com/raspberrypi/rpicam-apps) is a Raspberry Pi camera program that provides a good start for building advanced camera applications. It demonstrates the use of TensorFlow Lite (TFLite) for loading models to perform vision tasks. [Ultra-lightweight face detection model](https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB) project provides a pre-trained TFLite model and achieves real-time face detection performance on embedded devices. Raspberry Pi 3 and 4 come equipped with powerful H.264 hardware encoders, and project like [h264-live-player](https://github.com/131/h264-live-player) make it possible to decode and play real-time raw H.264 video streams directly in a web browser. This project also integrates [mongoose](https://github.com/cesanta/mongoose), a lightweight web server, to provide WebSocket and HTTP services. It uses [videojs](https://videojs.com) to play recorded footage and `libcurl` to send email alerts. With the conveniences provided by these projects, creating a lightweight home security camera system with web interface becomes significantly easier.
 
 ## Installation
 
-To properly enable rpicam-surv application, need to install three components: one is the common dependency of **rpicam-apps**, the other is the dependency for face detection post-processing, which is **tflite** (TensorFlow Lite), and security alert (Email) dependency.
+To properly setup rpicam-surv application, three components need to be installed: the common dependency of **rpicam-apps**, TensorFlow Lite package, and email alert dependency.
 
 ### [rpicam-apps](https://www.raspberrypi.com/documentation/computers/camera_software.html#building-rpicam-apps-without-building-libcamera)
 
@@ -60,7 +60,7 @@ sudo apt install -y ./tensorflow-lite_64.deb
 rm -rf tensorflow-lite_64.deb
 ```
 
-### Email Support (Recommend)
+### Email Alerts (Recommend)
 
 Install `libcurl` package:
 
@@ -68,7 +68,7 @@ Install `libcurl` package:
 sudo apt install -y libcurl4-openssl-dev
 ```
 
-### Meson build & install
+### Meson Build & Install
 
 Install the meson build system and ninja build tools:
 
@@ -98,7 +98,7 @@ Install the built files:
 sudo meson install -C build
 ```
 
-Update the ldconfig cache if is first time to build:
+Update the ldconfig cache if this is the first time to build:
 
 ```bash
 sudo ldconfig
@@ -106,7 +106,7 @@ sudo ldconfig
 
 ## Usage
 
-You can start surveillance via the command line:
+You can start surveillance via a single command:
 
 ```bash
 rpicam-surv -t 0 -r --inline --profile baseline --web-host 0.0.0.0 --web-port 8000 --post-process-file /usr/local/share/rpi-camera-assets/surveillance.json --alert-config-file /usr/local/share/rpi-camera-assets/alert_config.json --autofocus-mode manual
@@ -114,13 +114,17 @@ rpicam-surv -t 0 -r --inline --profile baseline --web-host 0.0.0.0 --web-port 80
 
 **OR**
 
-(Recommand) Install the program to `/opt/rpicam-surv` and set it to automatically start the service on boot:
+(Recommend) Go to `scripts` and install the program to `/opt/rpicam-surv` and set it to automatically start the service on boot:
+
+```bash
+cd scripts
+```
 
 ```bash
 sudo ./install_surv_service.sh
 ```
 
-Access the web backend by visiting `web_host:8000`.
+Access the web interface by visiting `web-host:8000`.
 
 ## Tips
 

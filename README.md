@@ -109,7 +109,7 @@ sudo ldconfig
 You can start surveillance via a single command:
 
 ```bash
-rpicam-surv -t 0 -r --inline --profile baseline --web-host 0.0.0.0 --web-port 8000 --post-process-file /usr/local/share/rpi-camera-assets/surveillance.json --alert-config-file /usr/local/share/rpi-camera-assets/alert_config.json --autofocus-mode manual
+rpicam-surv -t 0 -r --inline --enable-email-alerts --profile baseline --web-host 0.0.0.0 --web-port 8000 --post-process-file /usr/local/share/rpi-camera-assets/surveillance.json --alert-config-file /usr/local/share/rpi-camera-assets/alert_config.json --autofocus-mode manual
 ```
 
 **OR**

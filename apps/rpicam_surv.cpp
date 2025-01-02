@@ -17,13 +17,11 @@ class RPiCamSurvApp : public RPiCamEncoder<SurvOptions>
 public:
 	RPiCamSurvApp()
 		: RPiCamEncoder<SurvOptions>(), web_server_(nullptr), sentinel_service_(nullptr), cleaner_running_(false),
-		  enable_email_(GetOptions()->enable_email_alerts)
+		  enable_email_(false)
 	{
 	}
 
-	void *GetValue() override {
-		return &enable_email_;
-	}
+	void *GetValue() override { return &enable_email_; }
 
 	void SetValue(void *v) override
 	{
@@ -61,6 +59,7 @@ public:
 	{
 		if (!sentinel_service_)
 		{
+			enable_email_ = GetOptions()->enable_email_alerts;
 			sentinel_service_ = SentinelService::Create(this);
 			sentinel_service_->Start();
 		}

@@ -8,7 +8,7 @@
             "program": "${workspaceFolder}/build/apps/rpicam-surv",
             "args": [
                 "-t", "0",
-                "-r", "--inline",
+                "-r", "--inline", "--enable-email-alerts",
                 "--web-host", "0.0.0.0",
                 "--web-port", "8000",
                 "--profile", "baseline",

@@ -124,17 +124,18 @@ cd scripts
 sudo ./install_surv_service.sh
 ```
 
-Access the web interface by visiting `web-host:8000`.
+The `env.conf` file in the `scripts` folder allows you to configure application parameters (refer to [Tips](##Tips)) and will be copied to `/opt/rpicam-surv` via script. After setup `env.conf`, re-run the installation script.
+
+After successfully starting the application, access the web interface by visiting `web-host:8000`.
 
 ## Tips
 
 - The resolution can be modified in the `env.conf` file, but for optimal display, a **4:3** aspect ratio is recommended.
+
+- For more configurable parameters, refer to [`core/surv_options.hpp`](https://github.com/INeedNZT/rpicam-apps/blob/surveillance/core/surv_options.hpp)
 
 - Ensure the **prefix** in the meson configure is set to `/usr/local` and **datadir** is set to `share`.
 
 - Configure the `alert_config.json` in `/usr/local/share/rpi-camera-assets` to ensure the email alert works properly.
 
 - Events, surveillance footage, and web server logs are stored in the `HOME` directory, while the program's logs are located in `/opt/rpicam-surv`.
-
-- For more configurable parameters, refer to [`core/surv_options.hpp`](https://github.com/INeedNZT/rpicam-apps/blob/surveillance/core/surv_options.hpp)
-

@@ -99,22 +99,24 @@ static void log_fn(char c, void *param)
 class MongooseServer : public WebServer
 {
 public:
-	MongooseServer(SurvOptions const *options)
-		: WebServer(options), streaming_(false), video_width_(options->width), video_height_(options->height)
+	MongooseServer(RPiCamEncoder<SurvOptions> *app)
+		: WebServer(app), streaming_(false), video_width_(app->GetOptions()->width),
+		  video_height_(app->GetOptions()->height)
 	{
-		event_dir_ = options->event_directory;
-		footage_dir_ = options->footage_directory;
-		page404_ = options->web_root_directory + "/404.html";
-		root_dir_ = options->web_root_directory + "," + FOOTAGE_PREFIX + "=" + options->footage_directory + "," +
-					EVENT_PREFIX + "=" + options->event_directory;
+		event_dir_ = app->GetOptions()->event_directory;
+		footage_dir_ = app->GetOptions()->footage_directory;
+		page404_ = app->GetOptions()->web_root_directory + "/404.html";
+		root_dir_ = app->GetOptions()->web_root_directory + "," + FOOTAGE_PREFIX + "=" +
+					app->GetOptions()->footage_directory + "," + EVENT_PREFIX + "=" +
+					app->GetOptions()->event_directory;
 		http_server_options_ = {};
 		http_server_options_.page404 = page404_.c_str();
 		http_server_options_.root_dir = root_dir_.c_str();
 
-		date_format_ = options->footage_date_format;
-		time_format_ = options->playlist_time_format;
+		date_format_ = app->GetOptions()->footage_date_format;
+		time_format_ = app->GetOptions()->playlist_time_format;
 
-		Log *log = new Log { options->web_log_directory };
+		Log *log = new Log { app->GetOptions()->web_log_directory };
 		mg_log_set_fn(log_fn, static_cast<void *>(log));
 
 		// Print more debug information if needed
@@ -216,6 +218,17 @@ private:
 		}
 	}
 
+	static void email_status_handler(struct mg_connection *c, struct mg_http_message *hm, bool *enable_email_alerts)
+	{
+		bool enabled = false;
+		bool changed = mg_json_get_bool(hm->body, "$.es", &enabled);
+
+		if (changed)
+			*enable_email_alerts = enabled;
+
+		mg_http_reply(c, 200, "Content-Type: application/json\r\n", *enable_email_alerts ? "true" : "false");
+	}
+
 	static void surv_footage_handler(struct mg_connection *c, struct mg_http_message *hm, std::string footage_dir,
 									 std::string date_format)
 	{
@@ -270,7 +283,11 @@ private:
 		{
 			struct mg_http_message *hm = (struct mg_http_message *)ev_data;
 
-			if (mg_match(hm->uri, mg_str("/api/survfootage"), NULL))
+			if (mg_match(hm->uri, mg_str("/api/emailstatus"), NULL))
+			{
+				handler_wrapper(email_status_handler, c, hm, (bool *)server->app_->GetValue());
+			}
+			else if (mg_match(hm->uri, mg_str("/api/survfootage"), NULL))
 			{
 				handler_wrapper(surv_footage_handler, c, hm, server->footage_dir_, server->date_format_);
 			}
@@ -382,7 +399,7 @@ private:
 	}
 };
 
-std::unique_ptr<WebServer> WebServer::Create(SurvOptions const *options)
+std::unique_ptr<WebServer> WebServer::Create(RPiCamEncoder<SurvOptions> *app)
 {
-	return std::make_unique<MongooseServer>(options);
+	return std::make_unique<MongooseServer>(app);
 }

@@ -50,7 +50,9 @@ struct SurvOptions : public VideoOptions
 			"alert-config-file", value<std::string>(&alert_config_file),
 			"Set the file name for configuring the security alert.")(
 			"retention-cycle", value<unsigned int>(&retention_cycle)->default_value(3),
-			"Set the retention cycle in days for storage.")
+			"Set the retention cycle in days for storage.")(
+			"enable-email-alerts", value<bool>(&enable_email_alerts)->default_value(false)->implicit_value(true),
+			"For enable sending email security alerts.")
 			;
 	}
 
@@ -70,6 +72,7 @@ struct SurvOptions : public VideoOptions
 	unsigned int save_rate;
 
 	std::string alert_config_file;
+	bool enable_email_alerts;
 
 	unsigned int retention_cycle;
 
@@ -114,5 +117,6 @@ struct SurvOptions : public VideoOptions
 		std::cerr << "    save-rate: " << save_rate << std::endl;
 		std::cerr << "    alert-config-file: " << alert_config_file << std::endl;
 		std::cerr << "    retention-cycle: " << retention_cycle << std::endl;
+		std::cerr << "    enable-email-alerts: " << enable_email_alerts << std::endl;
 	}
 };

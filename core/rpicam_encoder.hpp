@@ -54,6 +54,8 @@ public:
 	}
 	T *GetOptions() const { return static_cast<T *>(options_.get()); }
 	void StopEncoder() { encoder_.reset(); }
+	virtual void *GetValue() { return nullptr; }
+	virtual void SetValue(void *v) {}
 
 protected:
 	virtual void createEncoder()

@@ -16,15 +16,28 @@ class RPiCamSurvApp : public RPiCamEncoder<SurvOptions>
 {
 public:
 	RPiCamSurvApp()
-		: RPiCamEncoder<SurvOptions>(), web_server_(nullptr), sentinel_service_(nullptr), cleaner_running_(false)
+		: RPiCamEncoder<SurvOptions>(), web_server_(nullptr), sentinel_service_(nullptr), cleaner_running_(false),
+		  enable_email_(GetOptions()->enable_email_alerts)
 	{
+	}
+
+	void *GetValue() override {
+		return &enable_email_;
+	}
+
+	void SetValue(void *v) override
+	{
+		if (v != nullptr)
+		{
+			enable_email_ = *static_cast<bool *>(v);
+		}
 	}
 
 	void StartWebServer()
 	{
 		if (!web_server_)
 		{
-			web_server_ = WebServer::Create(GetOptions());
+			web_server_ = WebServer::Create(this);
 			web_server_->Start();
 		}
 	}
@@ -96,6 +109,7 @@ private:
 	std::mutex mtx_;
 	std::condition_variable cv_;
 	bool cleaner_running_;
+	bool enable_email_;
 
 	void cleanupCycle()
 	{

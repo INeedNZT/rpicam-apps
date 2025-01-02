@@ -91,7 +91,7 @@ void SentinelService::run()
 				saveSnapshot(item.motion_detected, item.detected_boxes, item.scores, item.timestamp_us, stream_info,
 							 jpeg_buffer_ptr, jpeg_buffer_size);
 #if LIBCURL_PRESENT
-				if (event_start_time_ == item.timestamp_us || event_notif_flag_ == WARNING_SENDED)
+				if (*static_cast<bool *>(app_->GetValue()))
 				{
 					alert al;
 					al.type = alert_type::None;
@@ -101,7 +101,8 @@ void SentinelService::run()
 					if (item.detected_boxes.size() && item.scores.size())
 						al.type = alert_type::FaceRecognition;
 
-					if (event_notif_flag_ == WARNING_SENDED && al.type != alert_type::FaceRecognition)
+					if (event_notif_flag_ == DANGER_SENDED ||
+						(event_notif_flag_ == WARNING_SENDED && al.type != alert_type::FaceRecognition))
 						continue;
 
 					std::string date_format = app_->GetOptions()->footage_date_format;

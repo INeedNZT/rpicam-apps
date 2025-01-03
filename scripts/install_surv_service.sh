@@ -27,7 +27,7 @@ rm -rf $CONFIG_DIR
 echo "Installing new files..."
 mkdir -p $INSTALL_DIR
 cp $EXECUTABLE_PATH $INSTALL_DIR
-chmod +x $INSTALL_DIR/$EXECUTABLE_PATH
+chmod +x $INSTALL_DIR/$EXECUTABLE_NAME
 
 echo "Copy configuration files..."
 mkdir -p $CONFIG_DIR
@@ -40,7 +40,7 @@ Description=Rpicam Surveillance Service
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c "echo '--- Start: $(date '+%Y-%m-%d %H:%M:%S') ---' >> $INSTALL_DIR/surv-$(date +%Y-%m-%d_%H%M%S).log && $INSTALL_DIR/rpicam-surv $(cat $CONFIG_DIR/env.conf | grep -E '^[^#]' | tr '\n' ' ') >> $INSTALL_DIR/surv-$(date +%Y-%m-%d_%H%M%S).log 2>&1"
+ExecStart=/bin/bash -c "echo '--- Start: $(date '+%Y-%m-%d %H:%M:%S') ---' >> $INSTALL_DIR/surv-$(date +%Y-%m-%d_%H%M%S).log && $INSTALL_DIR/$EXECUTABLE_NAME $(cat $CONFIG_DIR/env.conf | grep -E '^[^#]' | tr '\n' ' ') >> $INSTALL_DIR/surv-$(date +%Y-%m-%d_%H%M%S).log 2>&1"
 WorkingDirectory=$INSTALL_DIR
 Restart=always
 User=$(whoami)

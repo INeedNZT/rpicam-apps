@@ -117,7 +117,7 @@ private:
 		std::string event_directory = options->event_directory;
 		std::string footage_directory = options->footage_directory;
 
-		while (cleaner_running_)
+		do
 		{
 			try
 			{
@@ -126,26 +126,13 @@ private:
 				std::tm tm_now = *std::localtime(&now_time_t);
 
 				tm_now.tm_hour = 0;
-				tm_now.tm_min = 0;
+				tm_now.tm_min = 5;
 				tm_now.tm_sec = 0;
 				tm_now.tm_mday += 1;
-				auto midnight_timestamp = std::mktime(&tm_now);
+				std::time_t midnight_timestamp = std::mktime(&tm_now);
 
-				tm_now.tm_mday -= (days);
+				tm_now.tm_mday -= (days + 1);
 				std::time_t retention_timestamp = std::mktime(&tm_now);
-
-				auto midnight_time_point = std::chrono::system_clock::from_time_t(midnight_timestamp);
-				auto diff_seconds = std::chrono::duration_cast<std::chrono::seconds>(midnight_time_point - now).count();
-
-				if (diff_seconds > 0)
-				{
-					std::unique_lock<std::mutex> lock(mtx_);
-					if (!cv_.wait_for(lock, std::chrono::seconds(diff_seconds), [this] { return !cleaner_running_; }))
-					{
-						// Not timeout, means cleaner_running_ set to false
-						break;
-					}
-				}
 
 				for (const auto &dir : { event_directory, footage_directory })
 				{
@@ -159,9 +146,22 @@ private:
 						std::time_t folder_timestamp = static_cast<time_t>(std::stoll(folder_name));
 						if (folder_timestamp < retention_timestamp)
 						{
-							LOG(1, "Periodically cleanup folders " << entry);
 							std::filesystem::remove_all(entry.path());
+							LOG(1, "Periodically cleanup folders " << entry);
 						}
+					}
+				}
+
+				auto midnight_time_point = std::chrono::system_clock::from_time_t(midnight_timestamp);
+				auto diff_seconds = std::chrono::duration_cast<std::chrono::seconds>(midnight_time_point - now).count();
+
+				if (diff_seconds > 0)
+				{
+					std::unique_lock<std::mutex> lock(mtx_);
+					if (!cv_.wait_for(lock, std::chrono::seconds(diff_seconds), [this] { return !cleaner_running_; }))
+					{
+						// Not timeout, means cleaner_running_ set to false
+						break;
 					}
 				}
 			}
@@ -169,7 +169,7 @@ private:
 			{
 				LOG_ERROR("Disk Cleaner Error: *** " << e.what() << " ***");
 			}
-		}
+		} while (cleaner_running_);
 	}
 };
 

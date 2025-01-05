@@ -65,8 +65,11 @@ systemctl daemon-reload
 systemctl enable $SERVICE_NAME
 systemctl start $SERVICE_NAME
 
+# Sleep to avoid false active
+sleep 5
+
 # Check if the service is active
-if pgrep -x "$SERVICE_NAME" > /dev/null; then
+if systemctl is-active --quiet $SERVICE_NAME; then
   echo -e "\n\e[32mThe service has been installed and started.\n\e[0m"
   echo "You can customize the parameters by editing the $CONFIG_DIR/env.conf file."
   echo "After making changes, execute the following command to apply the changes:"

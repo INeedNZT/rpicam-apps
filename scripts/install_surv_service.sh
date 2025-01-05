@@ -65,7 +65,12 @@ systemctl daemon-reload
 systemctl enable $SERVICE_NAME
 systemctl start $SERVICE_NAME
 
-echo -e "\n\e[32mThe service has been installed and started.\n\e[0m"
-echo "You can customize the parameters by editing the $CONFIG_DIR/env.conf file."
-echo "After making changes, execute the following command to apply the changes:"
-echo "    sudo systemctl restart $SERVICE_NAME"
+# Check if the service is active
+if pgrep -x "$SERVICE_NAME" > /dev/null; then
+  echo -e "\n\e[32mThe service has been installed and started.\n\e[0m"
+  echo "You can customize the parameters by editing the $CONFIG_DIR/env.conf file."
+  echo "After making changes, execute the following command to apply the changes:"
+  echo "    sudo systemctl restart $SERVICE_NAME"
+else
+  echo -e "\n\e[31mThe service failed to start. Please check the systemctl status for more details.\n\e[0m"
+fi

@@ -126,7 +126,7 @@ private:
 				std::tm tm_now = *std::localtime(&now_time_t);
 
 				tm_now.tm_hour = 0;
-				tm_now.tm_min = 5;
+				tm_now.tm_min = 0;
 				tm_now.tm_sec = 0;
 				tm_now.tm_mday += 1;
 				std::time_t midnight_timestamp = std::mktime(&tm_now);

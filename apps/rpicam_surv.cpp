@@ -131,7 +131,7 @@ private:
 				tm_now.tm_mday += 1;
 				std::time_t midnight_timestamp = std::mktime(&tm_now);
 
-				tm_now.tm_mday -= (days + 1);
+				tm_now.tm_mday -= days;
 				std::time_t retention_timestamp = std::mktime(&tm_now);
 
 				for (const auto &dir : { event_directory, footage_directory })

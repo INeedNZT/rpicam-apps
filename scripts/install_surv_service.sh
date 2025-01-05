@@ -29,6 +29,16 @@ mkdir -p $INSTALL_DIR
 cp $EXECUTABLE_PATH $INSTALL_DIR
 chmod +x $INSTALL_DIR/$EXECUTABLE_NAME
 
+echo "Creating the start.sh script..."
+cat > $INSTALL_DIR/start.sh <<EOL
+#!/bin/bash
+log_file="$INSTALL_DIR/surv-\$(date +%Y-%m-%d_%H%M%S).log"
+echo "--- Start: \$(date '+%Y-%m-%d %H:%M:%S') ---" >> \$log_file
+$INSTALL_DIR/$EXECUTABLE_NAME \$(grep -E '^[^#]' $CONFIG_DIR/env.conf | tr '\\n' ' ') >> \$log_file 2>&1
+EOL
+
+chmod +x $INSTALL_DIR/start.sh
+
 echo "Copy configuration files..."
 mkdir -p $CONFIG_DIR
 cp ./env.conf $CONFIG_DIR/env.conf
@@ -40,7 +50,7 @@ Description=Rpicam Surveillance Service
 After=network.target
 
 [Service]
-ExecStart=/bin/bash -c "echo '--- Start: $(date '+%Y-%m-%d %H:%M:%S') ---' >> $INSTALL_DIR/surv-$(date +%Y-%m-%d_%H%M%S).log && $INSTALL_DIR/$EXECUTABLE_NAME $(cat $CONFIG_DIR/env.conf | grep -E '^[^#]' | tr '\n' ' ') >> $INSTALL_DIR/surv-$(date +%Y-%m-%d_%H%M%S).log 2>&1"
+ExecStart=$INSTALL_DIR/start.sh
 WorkingDirectory=$INSTALL_DIR
 Restart=always
 User=$(whoami)

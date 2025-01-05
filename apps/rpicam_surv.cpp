@@ -158,9 +158,9 @@ private:
 				if (diff_seconds > 0)
 				{
 					std::unique_lock<std::mutex> lock(mtx_);
-					if (!cv_.wait_for(lock, std::chrono::seconds(diff_seconds), [this] { return !cleaner_running_; }))
+					if (cv_.wait_for(lock, std::chrono::seconds(diff_seconds), [this] { return !cleaner_running_; }))
 					{
-						// Not timeout, means cleaner_running_ set to false
+						// Not timeout, means predicate_func - cleaner_running_ set to false
 						break;
 					}
 				}

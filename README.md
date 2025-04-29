@@ -29,7 +29,7 @@ sudo apt install -y libcamera-dev libepoxy-dev libjpeg-dev libtiff5-dev libpng-d
 ```
 
 ```bash
-sudo apt install -y cmake libboost-program-options-dev libdrm-dev libexif-dev
+sudo apt install -y meson cmake libboost-program-options-dev libdrm-dev libexif-dev
 ```
 
 Install video-related dependencies:

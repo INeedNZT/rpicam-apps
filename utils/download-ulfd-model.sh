@@ -3,7 +3,8 @@ set -e
 
 declare -A networks=(
     # tflite RFB version model
-    ["https://raw.githubusercontent.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB/master/tflite/pretrained/version-RFB-320_without_postprocessing.tflite"]="version-RFB-320_without_postprocessing.tflite"
+    # https://raw.githubusercontent.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB/master/tflite/pretrained/version-RFB-320_without_postprocessing.tflite
+    ["https://gitee.com/Linzai/Ultra-Light-Fast-Generic-Face-Detector-1MB/raw/master/tflite/pretrained/version-RFB-320_without_postprocessing.tflite"]="version-RFB-320_without_postprocessing.tflite"
 )
 
 if [ $# -ne 1 ]; then

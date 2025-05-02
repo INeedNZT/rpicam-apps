@@ -29,7 +29,7 @@ sudo apt install -y libcamera-dev libepoxy-dev libjpeg-dev libtiff5-dev libpng-d
 ```
 
 ```bash
-sudo apt install -y meson cmake libboost-program-options-dev libdrm-dev libexif-dev
+sudo apt install -y libboost-program-options-dev libdrm-dev libexif-dev
 ```
 
 Install video-related dependencies:
@@ -68,12 +68,12 @@ Install `libcurl` package:
 sudo apt install -y libcurl4-openssl-dev
 ```
 
-### Meson Build & Install
+### Build & Install
 
-Install the meson build system and ninja build tools:
+Install the meson, cmake and ninja build tools:
 
 ```bash
-sudo apt install -y meson ninja-build
+sudo apt install -y meson cmake ninja-build
 ```
 
 Set up the meson configuration, specifying the required feature enable and disable options:
